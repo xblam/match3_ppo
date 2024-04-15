@@ -1,0 +1,28 @@
+import numpy as np
+
+class GameObject:
+    # Tile
+    color1 = 1
+    color2 = 2
+    color3 = 3
+    color4 = 4
+    color5 = 5
+    tiles = np.arange(color1, color5 + 1, 1)
+    # Power up
+    power_missile_h = 6 # horizontal missile
+    power_missile_v = 7 # vertical missile
+    power_bomb = 8
+    power_plane = 9
+    power_disco = 10
+    powers = np.arange(power_missile_h, power_disco + 1, 1)
+    # Blocker
+    blocker_box = 11
+    blocker_thorny = 12
+    blocker_bomb = 13
+    blockers = np.arange(power_missile_h, power_disco + 1, 1)
+    # Monster
+    monster_dame = 14
+    monster_box_box = 15
+    monster_box_bomb = 16
+    monster_box_thorny = 17
+    monster_box_both = 18
