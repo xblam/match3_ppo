@@ -26,3 +26,11 @@ class GameObject:
     monster_box_bomb = 16
     monster_box_thorny = 17
     monster_box_both = 18
+    monsters = np.arange(monster_dame, monster_box_both + 1, 1)
+
+def mask_immov_mask(line, immovable_shape):
+    immov_mask = (line == immovable_shape)
+    for _immov_obj in np.concatenate([GameObject.blockers, GameObject.monsters]):
+        immov_mask |= (line == _immov_obj)
+
+    return immov_mask

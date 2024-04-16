@@ -60,6 +60,7 @@ class Match3Levels:
     def create_board(self, level: Level) -> Board:
         empty_board = np.random.randint(0, level.n_shapes, size=(self.__h, self.__w))
         board_array = self.__put_immovable(empty_board, level)
+        board_array = self.__put_monster(empty_board, level)
         board = Board(self.__h, self.__w, level.n_shapes, self.__immovable_shape)
         board.set_board(board_array)
         return board
@@ -68,6 +69,14 @@ class Match3Levels:
         template = np.array(level.board)
         expanded_template = self.__expand_template(template)
         board[expanded_template == self.__immovable_shape] = -1
+        return board
+    
+    def __put_monster(self, board, level):
+        template = np.array(level.board)
+        expanded_template = self.__expand_template(template)
+        for monster in GameObject.monsters:
+            board[expanded_template == monster] = monster
+        print(board)
         return board
 
     def __expand_template(self, template):

@@ -12,7 +12,6 @@ import warnings
 
 BOARD_NDIM = 2
 
-
 class Match3Env(gym.Env):
     metadata = {'render.modes': None}
 
@@ -44,7 +43,7 @@ class Match3Env(gym.Env):
             dtype=int)
 
         # setting actions space
-        self.__match3_actions = self.__get_available_actions()
+        self.__match3_actions = self.__get_available_actions_in_order()
         self.action_space = spaces.Discrete(
             len(self.__match3_actions))
 
@@ -82,6 +81,32 @@ class Match3Env(gym.Env):
                     except OutOfBoardError:
                         continue
         return list(actions)
+    
+    def __get_available_actions_in_order(self):
+        """ calculate available actions for current board sizes in presented order"""
+        actions = []
+        rows, cols = self.__game.board.board_size
+        for i in range(rows):
+            for j in range(cols):
+                dir_p = Point(0, 1)
+                point = Point(i, j)
+                new_point = point + dir_p
+                try:
+                    _ = self.__game.board[new_point]
+                    actions.append(frozenset((point, new_point)))
+                except OutOfBoardError:
+                    continue
+        for i in range(rows):
+            for j in range(cols):
+                dir_p = Point(1, 0)
+                point = Point(i, j)
+                new_point = point + dir_p
+                try:
+                    _ = self.__game.board[new_point]
+                    actions.append(frozenset((point, new_point)))
+                except OutOfBoardError:
+                    continue
+        return list(actions)
 
     def __get_action(self, ind):
         return self.__match3_actions[ind]
@@ -89,6 +114,7 @@ class Match3Env(gym.Env):
     def step(self, action):
         # make action
         m3_action = self.__get_action(action)
+        print(m3_action)
         reward = self.__swap(*m3_action)
 
         # change counter even action wasn't successful

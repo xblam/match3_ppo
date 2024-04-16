@@ -5,7 +5,7 @@ from functools import wraps
 from abc import ABC, abstractmethod
 import numpy as np
 
-from gym_match3.envs.constants import GameObject
+from gym_match3.envs.constants import GameObject, mask_immov_mask
 
 
 class OutOfBoardError(IndexError):
@@ -249,7 +249,7 @@ class Board(AbstractBoard):
         return existence
 
     def __validate_board(self, board: np.ndarray):
-        self.__validate_max_shape(board)
+        # self.__validate_max_shape(board) # No check here because of multi tile
         self.__validate_board_size(board)
 
     def __validate_board_size(self, board: np.ndarray):
@@ -304,13 +304,13 @@ class Board(AbstractBoard):
     def put_line(self, ind, line: np.ndarray):
         # TODO: create board with putting lines on arbitrary axis
         self.__validate_line(ind, line)
-        self.__validate_max_shape(line)
+        # self.__validate_max_shape(line)
         self.__board[:, ind] = line
         return self
 
     def put_mask(self, mask, shapes):
         self.__validate_mask(mask)
-        self.__validate_max_shape(shapes)
+        # self.__validate_max_shape(shapes)
         self.__board[mask] = shapes
         return self
 
@@ -319,8 +319,10 @@ class Board(AbstractBoard):
             raise ImmovableShapeError
 
     def __validate_line(self, ind, line):
-        immove_mask = self.board[:, ind] == self.immovable_shape
-        new_immove_mask = np.array(line) == self.immovable_shape
+        immove_mask = mask_immov_mask(self.board[:, ind], self.immovable_shape)
+        new_immove_mask = mask_immov_mask(np.array(line), self.immovable_shape)
+        print(immove_mask)
+        print(new_immove_mask)
         if not np.array_equal(immove_mask, new_immove_mask):
             raise ImmovableShapeError
 
@@ -501,9 +503,10 @@ class Filler(AbstractFiller):
     def _move_line(line, immovable_shape):
         new_line = np.zeros_like(line)
         num_of_nans = np.isnan(line).sum()
-        immov_mask = (line == immovable_shape)
+        immov_mask = mask_immov_mask(line, immovable_shape)
         nans_mask = np.isnan(line)
-        new_line[immov_mask] = immovable_shape
+        new_line = np.zeros_like(line)
+        new_line = np.where(immov_mask, line, new_line)
 
         num_putted = 0
         for ind, shape in enumerate(new_line):
@@ -647,7 +650,6 @@ class Game(AbstractGame):
         self.start(board)
         while True:
             try:
-                print(self.board.board)
                 input_str = input()
                 coords = input_str.split(', ')
                 a, b, a1, b1 = [int(i) for i in coords]
