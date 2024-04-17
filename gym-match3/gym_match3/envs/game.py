@@ -191,6 +191,8 @@ class Board(AbstractBoard):
             raise ValueError('Only Point class supported for setting shapes')
 
     def __str__(self):
+        if isinstance(self.board, np.ndarray):
+            return str(self.board)
         return self.board.board
 
     @property
@@ -321,8 +323,8 @@ class Board(AbstractBoard):
     def __validate_line(self, ind, line):
         immove_mask = mask_immov_mask(self.board[:, ind], self.immovable_shape)
         new_immove_mask = mask_immov_mask(np.array(line), self.immovable_shape)
-        print(immove_mask)
-        print(new_immove_mask)
+        # print(immove_mask)
+        # print(new_immove_mask)
         if not np.array_equal(immove_mask, new_immove_mask):
             raise ImmovableShapeError
 

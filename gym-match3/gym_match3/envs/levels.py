@@ -76,7 +76,6 @@ class Match3Levels:
         expanded_template = self.__expand_template(template)
         for monster in GameObject.monsters:
             board[expanded_template == monster] = monster
-        print(board)
         return board
 
     def __expand_template(self, template):

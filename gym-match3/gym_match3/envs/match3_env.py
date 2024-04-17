@@ -148,3 +148,4 @@ class Match3Env(gym.Env):
         if close:
             warnings.warn("close=True isn't supported yet")
         self.renderer.render_board(self.__game.board)
+        print(self.__game.board)
