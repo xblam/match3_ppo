@@ -5,7 +5,7 @@ from functools import wraps
 from abc import ABC, abstractmethod
 import numpy as np
 
-from gym_match3.envs.constants import GameObject, mask_immov_mask
+from gym_match3.envs.constants import GameObject, mask_immov_mask, need_to_match
 
 
 class OutOfBoardError(IndexError):
@@ -354,6 +354,11 @@ class CustomBoard(Board):
 class AbstractSearcher(ABC):
     def __init__(self, board_ndim):
         self.__directions = self.__get_directions(board_ndim)
+        self.__disco_directions = self.__get_disco_directions(board_ndim)
+        # self.__bomb_directions = self.__get_bomb_directions(board_ndim)
+        self.__missile_directions = self.__get_missile_directions(board_ndim)
+        self.__plane_directions = self.__get_plane_directions(board_ndim)
+
 
     @staticmethod
     def __get_directions(board_ndim):
@@ -365,17 +370,77 @@ class AbstractSearcher(ABC):
             directions[ind][0][ind] = 1
             directions[ind][1][ind] = -1
         return directions
+    
+    @staticmethod
+    def __get_disco_directions(board_ndim):
+        directions = [
+            [[0 for _ in range(board_ndim)] for _ in range(4)]
+            for _ in range(board_ndim)
+        ]
+        for ind in range(board_ndim):
+            directions[ind][0][ind] = -2
+            directions[ind][1][ind] = -1
+            directions[ind][2][ind] = 1
+            directions[ind][3][ind] = 2
+        return directions
+
+    @staticmethod
+    def __get_plane_directions(board_ndim):
+        directions = [
+            [
+                [0, 1],
+                [1, 0],
+                [1, 1]
+            ]
+        ]
+        return directions
+
+    @staticmethod
+    def __get_bomb_directions(board_ndim):
+        directions = [
+            [[0 for _ in range(board_ndim)] for _ in range(4)]
+            for _ in range(5)
+        ]
+        for ind in range(len(directions)):
+            directions[ind][0][0] = -1
+            directions[ind][1][0] = 1
+            directions[ind][2][1] = -1
+            directions[ind][3][1] = 1
+        
+        directions[1][0][1] = -1
+        directions[1][1][1] = -1
+
+        directions[2][0][1] = 1
+        directions[2][1][1] = 1
+
+        directions[3][2][0] = -1
+        directions[3][3][0] = -1
+
+        directions[4][2][0] = 1
+        directions[4][3][0] = 1
+
+    @staticmethod
+    def __get_missile_directions(board_ndim):
+        directions = [
+            [[0 for _ in range(board_ndim)] for _ in range(3)]
+            for _ in range(board_ndim)
+        ]
+        for ind in range(board_ndim):
+            directions[ind][0][ind] = -2
+            directions[ind][1][ind] = -1
+            directions[ind][2][ind] = 1
+        return directions
 
     @property
     def directions(self):
-        return self.__directions
+        return self.__directions + self.__disco_directions + self.__missile_directions + self.__plane_directions
 
     @staticmethod
     def points_generator(board: Board):
         rows, cols = board.board_size
         points = [Point(i, j) for i, j in product(range(rows), range(cols))]
         for point in points:
-            if board[point] == board.immovable_shape:
+            if board[point] == board.immovable_shape or not need_to_match(board[point]):
                 continue
             else:
                 yield point
@@ -400,7 +465,7 @@ class AbstractMatchesSearcher(ABC):
 class MatchesSearcher(AbstractSearcher):
 
     def __init__(self, length, board_ndim):
-        self.__length = length
+        self.__3length, self.__4length, self.__5length = range(2, 5)
         super().__init__(board_ndim)
 
     def scan_board_for_matches(self, board: Board):
@@ -414,9 +479,11 @@ class MatchesSearcher(AbstractSearcher):
     def __get_match3_for_point(self, board: Board, point: Point):
         shape = board.get_shape(point)
         match3_list = []
-        for neighbours in self.__generator_neighbours(board, point):
+        for neighbours, length in self.__generator_neighbours(board, point):
             filtered = self.__filter_cells_by_shape(shape, neighbours)
-            if len(filtered) == (self.__length - 1):
+            # if len(filtered) == (self.__3length - 1):
+            if len(filtered) == length:
+                # print(filtered, shape, neighbours)
                 match3_list.extend(filtered)
 
         if len(match3_list) > 0:
@@ -429,11 +496,11 @@ class MatchesSearcher(AbstractSearcher):
             new_points = [point + Point(*dir_) for dir_ in axis_dirs]
             try:
                 yield [Cell(board.get_shape(new_p), *new_p.get_coord())
-                       for new_p in new_points]
+                       for new_p in new_points], len(axis_dirs)
             except OutOfBoardError:
                 continue
             finally:
-                yield []
+                yield [], 0
 
     @staticmethod
     def __filter_cells_by_shape(shape, *args):

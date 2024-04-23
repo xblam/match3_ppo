@@ -34,3 +34,6 @@ def mask_immov_mask(line, immovable_shape):
         immov_mask |= (line == _immov_obj)
 
     return immov_mask
+
+def need_to_match(shape):
+    return shape in GameObject.tiles
