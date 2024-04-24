@@ -1,4 +1,4 @@
-# ₢ PPO with M3 Simulator
+# PPO with M3 Simulator
 
 Thanks for [kamildar/gym-match3](https://github.com/kamildar/gym-match3) publish the baseline of building gymnasium match-3 games
 
