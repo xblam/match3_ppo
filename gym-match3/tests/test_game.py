@@ -213,7 +213,7 @@ class TestMatchesSearcher(unittest.TestCase):
         return sorted([i.get_coord() for i in args])
 
     def test_scan_board(self):
-        zeros_answer = self.searcher_three.scan_board_for_matches(
+        zeros_answer, _ = self.searcher_three.scan_board_for_matches(
             self.board_3x3_zeros)
         zeros_true = {
             Cell(0, 0, 0),
@@ -221,11 +221,11 @@ class TestMatchesSearcher(unittest.TestCase):
             Cell(0, 0, 2)
         }
 
-        seq_answer = self.searcher_three.scan_board_for_matches(
+        seq_answer, _ = self.searcher_three.scan_board_for_matches(
             self.board_3x3_seq)
         seq_true = set()
 
-        angle_answer = self.searcher_three.scan_board_for_matches(
+        angle_answer, _ = self.searcher_three.scan_board_for_matches(
             self.board_4x4_big_angle)
         angle_true = {
             Cell(0, 0, 0),

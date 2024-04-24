@@ -184,6 +184,7 @@ class Board(AbstractBoard):
 
     def __setitem__(self, value, indx: Point):
         self.__check_board()
+        # print(indx)
         self.__validate_points(indx)
         if isinstance(indx, Point):
             self.__board.itemset(indx.get_coord(), value)
@@ -355,10 +356,10 @@ class AbstractSearcher(ABC):
     def __init__(self, board_ndim):
         self.__directions = self.__get_directions(board_ndim)
         self.__disco_directions = self.__get_disco_directions(board_ndim)
-        # self.__bomb_directions = self.__get_bomb_directions(board_ndim)
+        self.__bomb_directions = self.__get_bomb_directions(board_ndim)
         self.__missile_directions = self.__get_missile_directions(board_ndim)
         self.__plane_directions = self.__get_plane_directions(board_ndim)
-
+        self.__power_up_cls = [GameObject.power_disco] * len(self.__disco_directions) + [GameObject.power_bomb] * len(self.__bomb_directions) + [GameObject.power_missile_h, GameObject.power_missile_v] + [GameObject.power_plane] * len(self.__plane_directions) + [-1] * len(self.__directions)
 
     @staticmethod
     def __get_directions(board_ndim):
@@ -397,27 +398,33 @@ class AbstractSearcher(ABC):
 
     @staticmethod
     def __get_bomb_directions(board_ndim):
-        directions = [
+        directions_T = [
             [[0 for _ in range(board_ndim)] for _ in range(4)]
             for _ in range(5)
         ]
-        for ind in range(len(directions)):
-            directions[ind][0][0] = -1
-            directions[ind][1][0] = 1
-            directions[ind][2][1] = -1
-            directions[ind][3][1] = 1
-        
-        directions[1][0][1] = -1
-        directions[1][1][1] = -1
+        for ind in range(len(directions_T)):
+            directions_T[ind][0][0] = -1
+            directions_T[ind][1][0] = 1
+            directions_T[ind][2][1] = -1
+            directions_T[ind][3][1] = 1
+        for ind in range(1, 5):
+            coeff = int(ind > 2) * 2
+            directions_T[ind][0 + coeff][ind < 3] = -1 + (ind % 2) * 2
+            directions_T[ind][1 + coeff][ind < 3] = -1 + (ind % 2) * 2
 
-        directions[2][0][1] = 1
-        directions[2][1][1] = 1
+        directions_L = [
+            [[0 for _ in range(board_ndim)] for _ in range(4)]
+            for _ in range(4)
+        ]
+        for ind in range(4):
+            coeff = ind % 2 * 2
+            directions_L[ind][0 + coeff][ind % 2] = -2 if 0 < ind and ind < 3 else 2
+            directions_L[ind][1 + coeff][ind % 2] = -1 if 0 < ind and ind < 3 else 1
+            
+            directions_L[(ind + 1) % 4][0 + coeff][ind % 2] = -2 if 0 < ind and ind < 3 else 2
+            directions_L[(ind + 1) % 4][1 + coeff][ind % 2] = -1 if 0 < ind and ind < 3 else 1
 
-        directions[3][2][0] = -1
-        directions[3][3][0] = -1
-
-        directions[4][2][0] = 1
-        directions[4][3][0] = 1
+        return directions_T + directions_L
 
     @staticmethod
     def __get_missile_directions(board_ndim):
@@ -430,10 +437,13 @@ class AbstractSearcher(ABC):
             directions[ind][1][ind] = -1
             directions[ind][2][ind] = 1
         return directions
+    
+    def get_power_up_type(self, ind):
+        return self.__power_up_cls[ind]
 
     @property
     def directions(self):
-        return self.__directions + self.__disco_directions + self.__missile_directions + self.__plane_directions
+        return self.__disco_directions + self.__bomb_directions + self.__missile_directions + self.__plane_directions + self.__directions
 
     @staticmethod
     def points_generator(board: Board):
@@ -470,37 +480,46 @@ class MatchesSearcher(AbstractSearcher):
 
     def scan_board_for_matches(self, board: Board):
         matches = set()
+        new_power_ups = dict()
         for point in self.points_generator(board):
-            to_del = self.__get_match3_for_point(board, point)
+            to_del, to_add = self.__get_match3_for_point(board, point)
+            # print(_)
             if to_del:
                 matches.update(to_del)
-        return matches
+                new_power_ups.update(to_add)
+
+        return matches, new_power_ups
 
     def __get_match3_for_point(self, board: Board, point: Point):
         shape = board.get_shape(point)
         match3_list = []
-        for neighbours, length in self.__generator_neighbours(board, point):
+        power_up_list: dict[Point, int] = {}
+        for neighbours, length, idx in self.__generator_neighbours(board, point):
             filtered = self.__filter_cells_by_shape(shape, neighbours)
-            # if len(filtered) == (self.__3length - 1):
             if len(filtered) == length:
-                # print(filtered, shape, neighbours)
                 match3_list.extend(filtered)
+
+                if length > 2 and idx != -1 and isinstance(point, Point):
+                    if point in power_up_list.keys():
+                        power_up_list[point] = max(power_up_list[point], self.get_power_up_type(idx))
+                    else:
+                        power_up_list[point] = self.get_power_up_type(idx)
 
         if len(match3_list) > 0:
             match3_list.append(Cell(shape, *point.get_coord()))
 
-        return match3_list
+        return match3_list, power_up_list
 
     def __generator_neighbours(self, board: Board, point: Point):
-        for axis_dirs in self.directions:
+        for idx, axis_dirs in enumerate(self.directions):
             new_points = [point + Point(*dir_) for dir_ in axis_dirs]
             try:
                 yield [Cell(board.get_shape(new_p), *new_p.get_coord())
-                       for new_p in new_points], len(axis_dirs)
+                       for new_p in new_points], len(axis_dirs), idx
             except OutOfBoardError:
                 continue
             finally:
-                yield [], 0
+                yield [], 0, -1
 
     @staticmethod
     def __filter_cells_by_shape(shape, *args):
@@ -532,7 +551,7 @@ class MovesSearcher(AbstractMovesSearcher, MatchesSearcher):
         for direction in self.directions_gen():
             try:
                 board.move(point, Point(*direction))
-                matches = self.scan_board_for_matches(board)
+                matches, _ = self.scan_board_for_matches(board)
                 # inverse move
                 board.move(point, Point(*direction))
             except (OutOfBoardError, ImmovableShapeError):
@@ -599,6 +618,18 @@ class Filler(AbstractFiller):
         new_shapes = np.random.randint(
             low=0, high=board.n_shapes, size=num_of_nans)
         board.put_mask(is_nan_mask, new_shapes)
+
+
+class AbstractPowerUpFactory(ABC):
+    @abstractmethod
+    def get_power_up_type(matches):
+        pass
+
+    
+class PowerUpFactory(AbstractPowerUpFactory, AbstractSearcher):
+    def __init__(self, board_ndim):
+        super().__init__(board_ndim)
+
 
 
 class AbstractMonster(ABC):
@@ -756,13 +787,18 @@ class Game(AbstractGame):
     def __move(self, point: Point, direction: Point):
         score = 0
 
-        matches = self.__check_matches(
+        matches, new_power_ups = self.__check_matches(
             point, direction)
         if len(matches) > 0:
             score += len(matches)
 
             self.board.move(point, direction)
             self.board.delete(matches)
+            ###
+            for _point, _shape in new_power_ups.items():
+                print(_point)
+                self.board.put_shape(_shape, _point)
+            ###
             self.__filler.move_and_fill(self.board)
             score += self.__operate_until_possible_moves()
 
@@ -771,8 +807,8 @@ class Game(AbstractGame):
     def __check_matches(self, point: Point, direction: Point):
         tmp_board = self.__get_copy_of_board()
         tmp_board.move(point, direction)
-        matches = self.__mtch_searcher.scan_board_for_matches(tmp_board)
-        return matches
+        matches, new_power_ups = self.__mtch_searcher.scan_board_for_matches(tmp_board)
+        return matches, new_power_ups
 
     def __get_copy_of_board(self):
         return copy.deepcopy(self.board)
@@ -796,12 +832,12 @@ class Game(AbstractGame):
 
     def __scan_del_mvnans_fill_until(self):
         score = 0
-        matches = self.__get_matches()
+        matches, _ = self.__get_matches()
         score += len(matches)
         while len(matches) > 0:
             self.board.delete(matches)
             self.__filler.move_and_fill(self.board)
-            matches = self.__get_matches()
+            matches, _ = self.__get_matches()
             score += len(matches)
         return score
 
