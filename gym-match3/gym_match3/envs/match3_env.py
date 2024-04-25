@@ -6,6 +6,7 @@ from gym_match3.envs.game import Game, Point
 from gym_match3.envs.game import OutOfBoardError, ImmovableShapeError
 from gym_match3.envs.levels import LEVELS, Match3Levels
 from gym_match3.envs.renderer import Renderer
+from gym_match3.envs.constants import GameObject
 
 from itertools import product
 import warnings
@@ -37,8 +38,8 @@ class Match3Env(gym.Env):
 
         # setting observation space
         self.observation_space = spaces.Box(
-            low=0,
-            high=self.n_shapes,
+            low=GameObject.color1,
+            high=self.n_shapes + 1,
             shape=self.__game.board.board_size,
             dtype=int)
 

@@ -303,6 +303,9 @@ class Board(AbstractBoard):
 
     def get_line(self, ind, axis=1):
         return np.take(self.board, ind, axis=axis)
+    
+    def get_monster(self):
+        return [Point(i, j) for i, j in product(range(self.board_size[0]), range(self.board_size[1])) if self.get_shape(Point(i, j)) in GameObject.monsters]
 
     def put_line(self, ind, line: np.ndarray):
         # TODO: create board with putting lines on arbitrary axis
@@ -337,8 +340,8 @@ class RandomBoard(Board):
 
         np.random.seed(random_state)
         board = np.random.randint(
-            low=0,
-            high=self.n_shapes,
+            low=GameObject.color1,
+            high=self.n_shapes + 1,
             size=board_size)
         self.set_board(board)
         return self
@@ -526,6 +529,53 @@ class MatchesSearcher(AbstractSearcher):
         return list(filter(lambda x: x.shape == shape, *args))
 
 
+class AbstractPowerUpActivator(ABC):
+    @abstractmethod
+    def activate_power_up(self, power_up_type: int, point: Point, board: Board):
+        pass
+
+
+class PowerUpActivator(AbstractPowerUpActivator):
+    def __init__(self):
+        self.__bomb_affect = self.__get_bomb_affect()
+        self.__plane_affect = self.__get_plane_affect()
+        
+    def activate_power_up(self, power_up_type: int, point: Point, directions, board: Board):
+        brokens = set()
+        point2 = point + directions
+        shape1 = board.get_shape()
+        shape2 = board.get_shape()
+
+        if shape1 in GameObject.powers and shape2 in GameObject.powers:
+            # Merge power_up
+            pass
+        elif shape1 in GameObject.powers:
+            self.__activate_not_merge(shape1, point, board)
+        elif shape2 in GameObject.powers:
+            self.__activate_not_merge(shape2, point, board)
+
+        return brokens
+    
+    def __activate_not_merge(self, power_up_type: int, point: Point, board: Board):
+        pass
+
+    @staticmethod
+    def __get_plane_affect():
+        affects = [[0 for _ in range(2)] for _ in range (4)]
+        affects[0][0] = 1
+        affects[1][0] = -1
+        affects[2][1] = 1
+        affects[3][1] = -1
+
+        return affects
+
+    @staticmethod
+    def __get_bomb_affect():
+        affects = [[i - 3, j - 3] for i, j in product(range(5), range(5))]
+
+        return affects
+
+
 class AbstractMovesSearcher(ABC):
 
     @abstractmethod
@@ -616,7 +666,7 @@ class Filler(AbstractFiller):
 
         np.random.seed(self.__random_state)
         new_shapes = np.random.randint(
-            low=0, high=board.n_shapes, size=num_of_nans)
+            low=GameObject.color1, high=board.n_shapes + 1, size=num_of_nans)
         board.put_mask(is_nan_mask, new_shapes)
 
 
@@ -745,6 +795,7 @@ class Game(AbstractGame):
         self.__mtch_searcher = MatchesSearcher(length=length, board_ndim=2)
         self.__mv_searcher = MovesSearcher(length=length, board_ndim=2)
         self.__filler = Filler(random_state=random_state)
+        self.__pu_activator = PowerUpActivator()
 
     def play(self, board: Union[np.ndarray, None]):
         self.start(board)
@@ -789,6 +840,7 @@ class Game(AbstractGame):
 
         matches, new_power_ups = self.__check_matches(
             point, direction)
+        matches.extend()
         if len(matches) > 0:
             score += len(matches)
 
@@ -797,7 +849,7 @@ class Game(AbstractGame):
             ###
             for _point, _shape in new_power_ups.items():
                 print(_point)
-                self.board.put_shape(_shape, _point)
+                self.board.put_shape(_point, _shape)
             ###
             self.__filler.move_and_fill(self.board)
             score += self.__operate_until_possible_moves()
@@ -808,6 +860,7 @@ class Game(AbstractGame):
         tmp_board = self.__get_copy_of_board()
         tmp_board.move(point, direction)
         matches, new_power_ups = self.__mtch_searcher.scan_board_for_matches(tmp_board)
+        brokes, 
         return matches, new_power_ups
 
     def __get_copy_of_board(self):
@@ -824,6 +877,9 @@ class Game(AbstractGame):
 
     def __get_matches(self):
         return self.__mtch_searcher.scan_board_for_matches(self.board)
+    
+    def __activate_power_up(self, power_up_type: int, point: Point):
+        return self.__pu_activator.activate_power_up(power_up_type, point, self.board)
 
     def __get_possible_moves(self):
         return self.__mv_searcher.search_moves(

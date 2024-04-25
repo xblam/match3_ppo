@@ -58,7 +58,7 @@ class Match3Levels:
         return d
 
     def create_board(self, level: Level) -> Board:
-        empty_board = np.random.randint(0, level.n_shapes, size=(self.__h, self.__w))
+        empty_board = np.random.randint(GameObject.color1, self.n_shapes, size=(self.__h, self.__w))
         board_array = self.__put_immovable(empty_board, level)
         board_array = self.__put_monster(empty_board, level)
         board = Board(self.__h, self.__w, level.n_shapes, self.__immovable_shape)

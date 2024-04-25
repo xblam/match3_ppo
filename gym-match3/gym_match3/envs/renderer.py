@@ -1,6 +1,7 @@
 import numpy as np
 from matplotlib import colors
 from gym_match3.envs.game import Board
+from gym_match3.envs.constants import GameObject
 
 # PyCharm debugger failed with default matplotlib backend
 import matplotlib
@@ -32,13 +33,22 @@ class Renderer:
         plt.imshow(board.board,
                    extent=[0.5, 0.5 + cols, 0.5, 0.5 + rows],
                    cmap=cmap, norm=norm)
-        plt.show()
 
     @staticmethod
     def __get_cmap(board: Board):
         cmap = plt.get_cmap('tab20b').colors
         if np.any(board.board == board.immovable_shape):
             cmap = ['black'] + list(cmap)
+        if np.any(board.board == GameObject.color1):
+            cmap = ['red'] + list(cmap)
+        if np.any(board.board == GameObject.color2):
+            cmap = ['green'] + list(cmap)
+        if np.any(board.board == GameObject.color3):
+            cmap = ['purple'] + list(cmap)
+        if np.any(board.board == GameObject.color4):
+            cmap = ['yellow'] + list(cmap)
+        if np.any(board.board == GameObject.color2):
+            cmap = ['blue'] + list(cmap)
         return colors.ListedColormap(cmap)
 
     def __get_norm(self):
