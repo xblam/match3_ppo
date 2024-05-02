@@ -540,8 +540,8 @@ class PowerUpActivator(AbstractPowerUpActivator):
         self.__bomb_affect = self.__get_bomb_affect()
         self.__plane_affect = self.__get_plane_affect()
         
-    def activate_power_up(self, power_up_type: int, point: Point, directions, board: Board):
-        brokens = set()
+    def activate_power_up(self, point: Point, directions, board: Board):
+        brokens = []
         point2 = point + directions
         shape1 = board.get_shape()
         shape2 = board.get_shape()
@@ -557,6 +557,25 @@ class PowerUpActivator(AbstractPowerUpActivator):
         return brokens
     
     def __activate_not_merge(self, power_up_type: int, point: Point, board: Board):
+        brokens = []
+        if power_up_type == GameObject.power_plane:
+            for _dir in self.__plane_affect:
+                brokens.append(point + Point(*_dir))
+            mons_pos = board.get_monster()
+            brokens.append(mons_pos[np.random.randint(0, len(mons_pos))])
+        elif power_up_type == GameObject.power_missile_h:
+            pass
+        elif power_up_type == GameObject.power_missile_v:
+            pass
+        elif power_up_type == GameObject.power_bomb:
+            pass
+        elif power_up_type == GameObject.power_disco:
+            pass
+        else:
+            raise ValueError(f"Do not have any power up type {power_up_type}")
+        return brokens
+
+    def __activate_merge(self, point1: Point, point2: Point, board: Board):
         pass
 
     @staticmethod
@@ -683,11 +702,24 @@ class PowerUpFactory(AbstractPowerUpFactory, AbstractSearcher):
 
 
 class AbstractMonster(ABC):
-    def __init__(self, relax_interval, setup_interval, hp = 30):
+    def __init__(self, relax_interval, setup_interval = 0, position:Point = None, hp = 30, width:int = 1, height:int = 1):
         self.__hp = hp
         self.__progress = 0
         self.__relax_interval = relax_interval
         self.__setup_interval = setup_interval
+        self.__position = position
+        self.__width, self.__height = width, height
+
+        self.__left_dmg_mask = self.__get_left_mask(self.__position, self.__height)
+        self.__right_dmg_mask = self.__get_right_mask()
+        self.__top_dmg_mask = self.__get_top_mask()
+        self.__down_dmg_mask = self.__get_down_mask()
+
+        self.inside_dmg_mask = [Point(i, j) + position for i, j in product(range(self.__height), range(self.__width))]
+
+    @property
+    def dmg_mask(self):
+        return self.__left_dmg_mask + self.__right_dmg_mask + self.__top_dmg_mask + self.__down_dmg_mask
 
     @abstractmethod
     def act(self):
@@ -697,10 +729,41 @@ class AbstractMonster(ABC):
     def attacked(self, damage):
         self.__hp -= damage
 
+    @staticmethod
+    def __get_left_mask(point:Point, height:int):
+        mask = []
+        for i in range(height):
+            mask.append(point + Point(-1, i))
+        return mask
+    
+    @staticmethod
+    def __get_top_mask(point:Point, width:int):
+        mask = []
+        for i in range(width):
+            mask.append(point + Point(i, -1))
+        return mask
+
+    @staticmethod
+    def __get_right_mask(point:Point, height:int):
+        mask = []
+        for i in range(height):
+            mask.append(point + Point(1, i))
+        return mask
+    
+    @staticmethod
+    def __get_top_mask(point:Point, width:int):
+        mask = []
+        for i in range(width):
+            mask.append(point + Point(i, 1))
+        return mask
+    
+    def get_dame(self, matches, brokens):
+        return len(set(self.dmg_mask) & set(matches)) + len(set(self.inside_dmg_mask) & set(brokens))
 
 class DameMonster(AbstractMonster):
-    def __init__(self, relax_interval=8, setup_interval=3, hp=30, dame=3, cancel_dame=5):
-        super().__init__(relax_interval, setup_interval, hp)
+    def __init__(self, position: Point, relax_interval=8, setup_interval=2, hp=30, width: int = 1, height: int = 1, dame=3, cancel_dame=5):
+        super().__init__(relax_interval, setup_interval, position, hp, width, height)
+    
         self.__damage = dame
 
         self.__cancel = cancel_dame
@@ -710,7 +773,7 @@ class DameMonster(AbstractMonster):
         super().act()
         if self.__cancel <= 0:
             self.__progress = 0
-            self.__hp += self.__cancel # __cancel <= 0
+            self.__hp += self.__cancel # because of negative __cancel
             self.__cancel = self.__cancel_dame
             return None
         
@@ -720,7 +783,9 @@ class DameMonster(AbstractMonster):
                 "damage": self.__damage
             }
         
-        return None
+        return {
+            "damage": 0
+        }
 
     def attacked(self, damage):
         if self.__setup_interval < self.__progress and \
@@ -731,7 +796,8 @@ class DameMonster(AbstractMonster):
 
 
 class BoxMonster(AbstractMonster):
-    def __init__(self, box_mons_type, relax_interval=7, hp=30):
+    def __init__(self, box_mons_type:int, relax_interval, setup_interval, position: Point, hp=30, width: int = 1, height: int = 1):
+        super().__init__(relax_interval, setup_interval, position, hp, width, height)
         super().__init__(relax_interval, 0, hp)
         self.__box_monster_type = box_mons_type
 
@@ -837,6 +903,7 @@ class Game(AbstractGame):
 
     def __move(self, point: Point, direction: Point):
         score = 0
+        dmg = 0
 
         matches, new_power_ups = self.__check_matches(
             point, direction)
@@ -847,21 +914,28 @@ class Game(AbstractGame):
             self.board.move(point, direction)
             self.board.delete(matches)
             ###
-            for _point, _shape in new_power_ups.items():
-                print(_point)
-                self.board.put_shape(_point, _shape)
+            # for _point, _shape in new_power_ups.items():
+            #     print(_point)
+            #     self.board.put_shape(_point, _shape)
             ###
             self.__filler.move_and_fill(self.board)
             score += self.__operate_until_possible_moves()
 
-        return score
+        return {
+            "score": score,
+            "damage_on_monster": dmg
+        }
 
     def __check_matches(self, point: Point, direction: Point):
         tmp_board = self.__get_copy_of_board()
         tmp_board.move(point, direction)
+        brokes = self.__pu_activator.activate_power_up()
         matches, new_power_ups = self.__mtch_searcher.scan_board_for_matches(tmp_board)
-        brokes, 
+        #TODO brokes, 
         return matches, new_power_ups
+    
+    def __sweep_died_monster(self):
+        pass
 
     def __get_copy_of_board(self):
         return copy.deepcopy(self.board)

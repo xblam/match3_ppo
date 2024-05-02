@@ -2,10 +2,10 @@ import numpy as np
 from collections import namedtuple
 import random
 
-from gym_match3.envs.game import Board
+from gym_match3.envs.game import Point, Board, DameMonster, BoxMonster
 from gym_match3.envs.constants import GameObject
 
-Level = namedtuple("Level", ["h", "w", "n_shapes", "board"])
+Level = namedtuple("Level", ["h", "w", "n_shapes", "board", "list_monster"])
 
 
 class Match3Levels:
@@ -131,6 +131,10 @@ LEVELS = [
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
+    ], [
+        DameMonster(position=Point(4, 4),
+                    width=2,
+                    height=2)
     ]),
 
     Level(10, 9, 5, [
@@ -144,6 +148,11 @@ LEVELS = [
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
+    ], [
+        BoxMonster(box_mons_type=GameObject.monster_box_box, 
+                   position=Point(4, 4),
+                   width=2,
+                   height=2)
     ]),
 
     Level(10, 9, 5, [
@@ -157,6 +166,11 @@ LEVELS = [
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
+    ], [
+        BoxMonster(box_mons_type=GameObject.monster_box_bomb, 
+                   position=Point(4, 4),
+                   width=2,
+                   height=2)
     ]),
 
     Level(10, 9, 5, [
@@ -170,6 +184,11 @@ LEVELS = [
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
+    ], [
+        BoxMonster(box_mons_type=GameObject.monster_box_thorny, 
+                   position=Point(4, 4),
+                   width=2,
+                   height=2)
     ]),
 ]
 
