@@ -131,8 +131,8 @@ class Match3Env(gym.Env):
         return ob, reward, episode_over, {}
 
     def reset(self, *args, **kwargs):
-        board = self.levels.sample()
-        self.__game.start(board)
+        board, list_monsters = self.levels.sample()
+        self.__game.start(board, list_monsters)
         return self.__get_board()
 
     def __swap(self, point1, point2):

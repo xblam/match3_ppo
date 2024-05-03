@@ -90,9 +90,12 @@ class Cell(Point):
         return Point(*self.get_coord())
 
     def __eq__(self, other):
-        eq_shape = self.shape == other.shape
-        eq_points = super().__eq__(other)
-        return eq_shape and eq_points
+        if(isinstance(other, Point)):
+            return super().__eq__(other)
+        else:
+            eq_shape = self.shape == other.shape
+            eq_points = super().__eq__(other)
+            return eq_shape and eq_points
 
     def __hash__(self):
         return hash((self.shape, self.get_coord()))
@@ -711,9 +714,9 @@ class AbstractMonster(ABC):
         self.__width, self.__height = width, height
 
         self.__left_dmg_mask = self.__get_left_mask(self.__position, self.__height)
-        self.__right_dmg_mask = self.__get_right_mask()
-        self.__top_dmg_mask = self.__get_top_mask()
-        self.__down_dmg_mask = self.__get_down_mask()
+        self.__right_dmg_mask = self.__get_right_mask(self.__position + Point(0, self.__width - 1), self.__height)
+        self.__top_dmg_mask = self.__get_top_mask(self.__position, self.__width)
+        self.__down_dmg_mask = self.__get_down_mask(self.__position + Point(self.__height - 1, 0), self.__width)
 
         self.inside_dmg_mask = [Point(i, j) + position for i, j in product(range(self.__height), range(self.__width))]
 
@@ -725,7 +728,7 @@ class AbstractMonster(ABC):
     def act(self):
         self.__progress += 1
 
-    @abstractmethod
+    # @abstractmethod
     def attacked(self, damage):
         self.__hp -= damage
 
@@ -733,32 +736,34 @@ class AbstractMonster(ABC):
     def __get_left_mask(point:Point, height:int):
         mask = []
         for i in range(height):
-            mask.append(point + Point(-1, i))
+            mask.append(point + Point(i, -1))
         return mask
     
     @staticmethod
     def __get_top_mask(point:Point, width:int):
         mask = []
         for i in range(width):
-            mask.append(point + Point(i, -1))
+            mask.append(point + Point(-1, i))
         return mask
 
     @staticmethod
     def __get_right_mask(point:Point, height:int):
         mask = []
         for i in range(height):
-            mask.append(point + Point(1, i))
-        return mask
-    
-    @staticmethod
-    def __get_top_mask(point:Point, width:int):
-        mask = []
-        for i in range(width):
             mask.append(point + Point(i, 1))
         return mask
     
+    @staticmethod
+    def __get_down_mask(point:Point, width:int):
+        mask = []
+        for i in range(width):
+            mask.append(point + Point(1, i))
+        return mask
+    
     def get_dame(self, matches, brokens):
-        return len(set(self.dmg_mask) & set(matches)) + len(set(self.inside_dmg_mask) & set(brokens))
+        __matches = [ele.point for ele in matches]
+        # print(set(self.dmg_mask) & set(__matches))
+        return len(set(self.dmg_mask) & set(__matches)) # not inside yet + len(set(self.inside_dmg_mask) & set(brokens))
 
 class DameMonster(AbstractMonster):
     def __init__(self, position: Point, relax_interval=8, setup_interval=2, hp=30, width: int = 1, height: int = 1, dame=3, cancel_dame=5):
@@ -874,7 +879,7 @@ class Game(AbstractGame):
             except KeyboardInterrupt:
                 break
 
-    def start(self, board: Union[np.ndarray, None, Board]):
+    def start(self, board: Union[np.ndarray, None, Board], list_monsters: list[AbstractMonster]):
         # TODO: check consistency of movable figures and n_shapes
         if board is None:
             rows, cols = self.board.board_size
@@ -887,6 +892,7 @@ class Game(AbstractGame):
         elif isinstance(board, Board):
             self.board = board
         self.__operate_until_possible_moves()
+        self.list_monsters = list_monsters
 
         return self
 
@@ -907,7 +913,11 @@ class Game(AbstractGame):
 
         matches, new_power_ups = self.__check_matches(
             point, direction)
-        matches.extend()
+        
+        #TODO: handling for match side of monster
+        for _mon in self.list_monsters:
+            dmg += _mon.get_dame(matches, None)
+
         if len(matches) > 0:
             score += len(matches)
 
@@ -929,7 +939,7 @@ class Game(AbstractGame):
     def __check_matches(self, point: Point, direction: Point):
         tmp_board = self.__get_copy_of_board()
         tmp_board.move(point, direction)
-        brokes = self.__pu_activator.activate_power_up()
+        # brokes = self.__pu_activator.activate_power_up()
         matches, new_power_ups = self.__mtch_searcher.scan_board_for_matches(tmp_board)
         #TODO brokes, 
         return matches, new_power_ups

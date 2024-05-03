@@ -1,6 +1,7 @@
 import numpy as np
 
 class GameObject:
+    immovable_shape = -1
     # Tile
     color1 = 1
     color2 = 2
