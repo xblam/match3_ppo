@@ -7,9 +7,11 @@ from gym_match3.envs.game import OutOfBoardError, ImmovableShapeError
 from gym_match3.envs.levels import LEVELS, Match3Levels
 from gym_match3.envs.renderer import Renderer
 from gym_match3.envs.constants import GameObject
+from gym_match3.envs.match3_helper import M3Helper
 
 from itertools import product
 import warnings
+import time
 
 BOARD_NDIM = 2
 
@@ -17,10 +19,12 @@ class Match3Env(gym.Env):
     metadata = {'render.modes': None}
 
     def __init__(self, rollout_len=100, all_moves=False, levels=None, random_state=None):
+        self.num_envs = 1
         self.rollout_len = rollout_len
         self.random_state = random_state
         self.all_moves = all_moves
         self.levels = levels or Match3Levels(LEVELS)
+        self.helper = M3Helper(10, 9)
         self.h = self.levels.h
         self.w = self.levels.w
         self.n_shapes = self.levels.n_shapes
@@ -40,7 +44,7 @@ class Match3Env(gym.Env):
         self.observation_space = spaces.Box(
             low=GameObject.color1,
             high=self.n_shapes + 1,
-            shape=self.__game.board.board_size,
+            shape=(len(self.helper.obs_order), *self.__game.board.board_size),
             dtype=int)
 
         # setting actions space
@@ -114,8 +118,10 @@ class Match3Env(gym.Env):
 
     def step(self, action):
         # make action
+        s_t = time.time()
         m3_action = self.__get_action(action)
         print(m3_action)
+        ob = {}
         reward = self.__swap(*m3_action)
 
         # change counter even action wasn't successful
@@ -123,17 +129,32 @@ class Match3Env(gym.Env):
         if self.__episode_counter >= self.rollout_len:
             episode_over = True
             self.__episode_counter = 0
-            ob = self.reset()
+            ob["board"] = self.reset()
+            ob["list_monster"] = self.__game.list_monsters
         else:
             episode_over = False
-            ob = self.__get_board()
+            ob["board"] = self.__get_board()
+            ob["list_monster"] = self.__game.list_monsters
+        
+        print("play time", time.time() - s_t)
+        s_t = time.time()
 
-        return ob, reward, episode_over, {}
+        obs = self.helper._format_observation(ob["board"], ob["list_monster"], "cpu")
+
+        print("process obs", time.time() - s_t)
+
+        return self.helper.obs_to_tensor(obs["obs"]), reward, episode_over, {
+            "action_space": obs["action_space"]
+        }
 
     def reset(self, *args, **kwargs):
         board, list_monsters = self.levels.sample()
         self.__game.start(board, list_monsters)
-        return self.__get_board()
+        obs = self.helper._format_observation(self.__get_board(), list_monsters, "cpu")
+        return self.helper.obs_to_tensor(obs["obs"]), {
+            "action_space": obs["action_space"]
+        }
+        
 
     def __swap(self, point1, point2):
         try:

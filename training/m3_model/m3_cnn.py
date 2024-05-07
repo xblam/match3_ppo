@@ -3,7 +3,7 @@ from torch import nn
 from typing import Tuple, List, Dict, Union, Type
 
 class M3Aap(nn.AdaptiveMaxPool2d):
-    def __init__(self, output_size: int | Tuple[int | None, ...] | None) -> None:
+    def __init__(self, output_size: Union[int, Tuple[Union[int, None]], None]) -> None:
         super().__init__(output_size)
 
     def forward(self, input: torch.Tensor) -> torch.Tensor:
@@ -29,7 +29,7 @@ class M3CnnFeatureExtractor(nn.Module):
         super(M3CnnFeatureExtractor, self).__init__()
         
         layers = []
-        layers.append(nn.Conv2d(in_channels, kwargs["mid_channels"], 3, stride=1, padding=1)) # (batch, mid_channels, (size))
+        layers.append(nn.Conv2d(in_channels.shape[0], kwargs["mid_channels"], 3, stride=1, padding=1)) # (batch, mid_channels, (size))
         layers.append(nn.ReLU())
         for _ in range(kwargs["num_first_cnn_layer"]):
             layers.append(nn.Conv2d(kwargs["mid_channels"], kwargs["mid_channels"], 3, stride=1, padding=1)) # (batch, mid_channels, (size))
@@ -44,8 +44,11 @@ class M3CnnFeatureExtractor(nn.Module):
 
         self.linear = nn.Sequential(nn.Linear(self.features_dim, self.features_dim), nn.ReLU())
 
-    def forward(self, input):
-        return self.linear(self.net(input))
+    def forward(self, input: torch.Tensor):
+        if len(input.shape) == 3:
+            input = torch.unsqueeze(input, 0)
+        x = self.net(input)
+        return self.linear(x)
     
 class M3MlpExtractor(nn.Module):
     """

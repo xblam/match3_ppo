@@ -153,12 +153,13 @@ class OnPolicyAlgorithm(BaseAlgorithm):
         :return: True if function returned with at least `n_rollout_steps`
             collected, False if callback terminated rollout prematurely.
         """
-        assert self._last_obs is not None, "No previous observation was provided"
         # Switch to eval mode (this affects batch norm / dropout)
         self.policy.set_training_mode(False)
 
         n_steps = 0
         rollout_buffer.reset()
+        self._last_obs, _ = env.reset()
+        action_space = _["action_space"]
         # Sample new weights for the state dependent exploration
         if self.use_sde:
             self.policy.reset_noise(env.num_envs)
@@ -173,11 +174,12 @@ class OnPolicyAlgorithm(BaseAlgorithm):
             with th.no_grad():
                 # Convert to pytorch tensor or to TensorDict
                 obs_tensor = obs_as_tensor(self._last_obs, self.device)
-                actions, values, log_probs = self.policy(obs_tensor)
+                action_space = obs_as_tensor(action_space, self.device)
+                actions, values, log_probs = self.policy(obs_tensor, action_space)
             actions = actions.cpu().numpy()
 
             # Rescale and perform action
-            clipped_actions = actions
+            clipped_actions = actions[0]
 
             if isinstance(self.action_space, spaces.Box):
                 if self.policy.squash_output:
@@ -190,10 +192,12 @@ class OnPolicyAlgorithm(BaseAlgorithm):
                     clipped_actions = np.clip(actions, self.action_space.low, self.action_space.high)
 
             new_obs, rewards, dones, infos = env.step(clipped_actions)
+            print(rewards)
+            action_space = infos["action_space"]
 
             self.num_timesteps += env.num_envs
 
-            self._update_info_buffer(infos, dones)
+            # self._update_info_buffer(infos, dones) #Open if like
             n_steps += 1
 
             if isinstance(self.action_space, spaces.Discrete):
@@ -202,16 +206,16 @@ class OnPolicyAlgorithm(BaseAlgorithm):
 
             # Handle timeout by bootstraping with value function
             # see GitHub issue #633
-            for idx, done in enumerate(dones):
-                if (
-                    done
-                    and infos[idx].get("terminal_observation") is not None
-                    and infos[idx].get("TimeLimit.truncated", False)
-                ):
-                    terminal_obs = self.policy.obs_to_tensor(infos[idx]["terminal_observation"])[0]
-                    with th.no_grad():
-                        terminal_value = self.policy.predict_values(terminal_obs)[0]  # type: ignore[arg-type]
-                    rewards[idx] += self.gamma * terminal_value
+            # for idx, done in enumerate(dones):
+            #     if (
+            #         done
+            #         and infos[idx].get("terminal_observation") is not None
+            #         and infos[idx].get("TimeLimit.truncated", False)
+            #     ):
+            #         terminal_obs = self.policy.obs_to_tensor(infos[idx]["terminal_observation"])[0]
+            #         with th.no_grad():
+            #             terminal_value = self.policy.predict_values(terminal_obs)[0]  # type: ignore[arg-type]
+            #         rewards[idx] += self.gamma * terminal_value
 
             rollout_buffer.add(
                 self._last_obs,  # type: ignore[arg-type]

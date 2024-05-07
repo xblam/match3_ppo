@@ -484,7 +484,7 @@ class MatchesSearcher(AbstractSearcher):
         self.__3length, self.__4length, self.__5length = range(2, 5)
         super().__init__(board_ndim)
 
-    def scan_board_for_matches(self, board: Board):
+    def scan_board_for_matches(self, board: Board, need_all: bool = True):
         matches = set()
         new_power_ups = dict()
         for point in self.points_generator(board):
@@ -493,6 +493,8 @@ class MatchesSearcher(AbstractSearcher):
             if to_del:
                 matches.update(to_del)
                 new_power_ups.update(to_add)
+                if not need_all:
+                    break
 
         return matches, new_power_ups
 
@@ -611,25 +613,28 @@ class MovesSearcher(AbstractMovesSearcher, MatchesSearcher):
         possible_moves = set()
         for point in self.points_generator(board):
             possible_moves_for_point = self.__search_moves_for_point(
-                board, point)
+                board, point, need_all=all_moves)
             possible_moves.update(possible_moves_for_point)
             if len(possible_moves_for_point) > 0 and not all_moves:
                 break
         return possible_moves
 
-    def __search_moves_for_point(self, board: Board, point: Point):
+    def __search_moves_for_point(self, board: Board, point: Point, need_all=True):
         # contain tuples of point and direction
+        print(need_all)
         possible_moves = set()
         for direction in self.directions_gen():
             try:
                 board.move(point, Point(*direction))
-                matches, _ = self.scan_board_for_matches(board)
+                matches, _ = self.scan_board_for_matches(board, need_all=need_all)
                 # inverse move
                 board.move(point, Point(*direction))
             except (OutOfBoardError, ImmovableShapeError):
                 continue
             if len(matches) > 0:
                 possible_moves.add((point, tuple(direction)))
+                if not need_all:
+                    break
         return possible_moves
 
 
@@ -671,7 +676,7 @@ class Filler(AbstractFiller):
         num_putted = 0
         for ind, shape in enumerate(new_line):
 
-            if shape != immovable_shape and num_putted < num_of_nans:
+            if shape != immovable_shape and shape not in GameObject.monsters and num_putted < num_of_nans:
                 new_line[ind] = np.nan
                 num_putted += 1
                 if num_putted == num_of_nans:
@@ -706,19 +711,20 @@ class PowerUpFactory(AbstractPowerUpFactory, AbstractSearcher):
 
 class AbstractMonster(ABC):
     def __init__(self, relax_interval, setup_interval = 0, position:Point = None, hp = 30, width:int = 1, height:int = 1):
-        self.__hp = hp
-        self.__progress = 0
-        self.__relax_interval = relax_interval
-        self.__setup_interval = setup_interval
-        self.__position = position
-        self.__width, self.__height = width, height
+        self._hp = hp
+        self._progress = 0
+        self._relax_interval = relax_interval
+        self._setup_interval = setup_interval
+        self._position = position
+        self._width, self._height = width, height
 
-        self.__left_dmg_mask = self.__get_left_mask(self.__position, self.__height)
-        self.__right_dmg_mask = self.__get_right_mask(self.__position + Point(0, self.__width - 1), self.__height)
-        self.__top_dmg_mask = self.__get_top_mask(self.__position, self.__width)
-        self.__down_dmg_mask = self.__get_down_mask(self.__position + Point(self.__height - 1, 0), self.__width)
+        self.__left_dmg_mask = self.__get_left_mask(self._position, self._height)
+        self.__right_dmg_mask = self.__get_right_mask(self._position + Point(0, self._width - 1), self._height)
+        self.__top_dmg_mask = self.__get_top_mask(self._position, self._width)
+        self.__down_dmg_mask = self.__get_down_mask(self._position + Point(self._height - 1, 0), self._width)
 
-        self.inside_dmg_mask = [Point(i, j) + position for i, j in product(range(self.__height), range(self.__width))]
+        self.inside_dmg_mask = [Point(i, j) + position for i, j in product(range(self._height), range(self._width))]
+        self.cause_dmg_mask = []
 
     @property
     def dmg_mask(self):
@@ -726,11 +732,11 @@ class AbstractMonster(ABC):
 
     @abstractmethod
     def act(self):
-        self.__progress += 1
+        self._progress += 1
 
     # @abstractmethod
     def attacked(self, damage):
-        self.__hp -= damage
+        self._hp -= damage
 
     @staticmethod
     def __get_left_mask(point:Point, height:int):
@@ -769,23 +775,25 @@ class DameMonster(AbstractMonster):
     def __init__(self, position: Point, relax_interval=8, setup_interval=2, hp=30, width: int = 1, height: int = 1, dame=3, cancel_dame=5):
         super().__init__(relax_interval, setup_interval, position, hp, width, height)
     
-        self.__damage = dame
+        self._damage = dame
 
-        self.__cancel = cancel_dame
-        self.__cancel_dame = cancel_dame
+        self._cancel = cancel_dame
+        self._cancel_dame = cancel_dame
 
     def act(self):
         super().act()
-        if self.__cancel <= 0:
-            self.__progress = 0
-            self.__hp += self.__cancel # because of negative __cancel
-            self.__cancel = self.__cancel_dame
-            return None
-        
-        if self.__progress > self.__relax_interval + self.__setup_interval:
-            self.__progress = 0
+        if self._cancel <= 0:
+            self._progress = 0
+            self._hp += self._cancel # because of negative __cancel
+            self._cancel = self._cancel_dame
             return {
-                "damage": self.__damage
+                "damage": 0
+            }
+        
+        if self._progress > self._relax_interval + self._setup_interval:
+            self._progress = 0
+            return {
+                "damage": self._damage
             }
         
         return {
@@ -793,9 +801,9 @@ class DameMonster(AbstractMonster):
         }
 
     def attacked(self, damage):
-        if self.__setup_interval < self.__progress and \
-            self.__progress <= self.__relax_interval:
-            self.__cancel -= damage
+        if self._setup_interval < self._progress and \
+            self._progress <= self._relax_interval:
+            self._cancel -= damage
         else:
             super().attacked(damage)
 
@@ -808,7 +816,7 @@ class BoxMonster(AbstractMonster):
 
     def act(self):
         super().act()
-        if self.__progress > self.__relax_interval + self.__setup_interval:
+        if self.__progress > self._relax_interval + self._setup_interval:
             self.__progress = 0
             if self.__box_monster_type == GameObject.monster_box_box:
                 return {
@@ -866,7 +874,7 @@ class Game(AbstractGame):
         self.__mtch_searcher = MatchesSearcher(length=length, board_ndim=2)
         self.__mv_searcher = MovesSearcher(length=length, board_ndim=2)
         self.__filler = Filler(random_state=random_state)
-        self.__pu_activator = PowerUpActivator()
+        # self.__pu_activator = PowerUpActivator()
 
     def play(self, board: Union[np.ndarray, None]):
         self.start(board)
@@ -905,11 +913,16 @@ class Game(AbstractGame):
     def swap(self, point: Point, point2: Point):
         direction = point2 - point
         score = self.__move(point, direction)
+
         return score
 
     def __move(self, point: Point, direction: Point):
         score = 0
         dmg = 0
+        self_dmg = 0
+        
+        import time
+        s_t = time.time()
 
         matches, new_power_ups = self.__check_matches(
             point, direction)
@@ -917,10 +930,11 @@ class Game(AbstractGame):
         #TODO: handling for match side of monster
         for _mon in self.list_monsters:
             dmg += _mon.get_dame(matches, None)
+            _mon.attacked(dmg)
+            self_dmg += _mon.act()["damage"]
 
         if len(matches) > 0:
             score += len(matches)
-
             self.board.move(point, direction)
             self.board.delete(matches)
             ###
@@ -929,11 +943,15 @@ class Game(AbstractGame):
             #     self.board.put_shape(_point, _shape)
             ###
             self.__filler.move_and_fill(self.board)
-            score += self.__operate_until_possible_moves()
+            self.__operate_until_possible_moves()
+
+        
+        print("refill", time.time() - s_t)
 
         return {
             "score": score,
-            "damage_on_monster": dmg
+            "damage_on_monster": dmg,
+            "damage_on_user": self_dmg,
         }
 
     def __check_matches(self, point: Point, direction: Point):
@@ -955,8 +973,13 @@ class Game(AbstractGame):
         scan board, then delete matches, move nans, fill
         repeat until no matches and appear possible moves
         """
+        import time
+        s_t = time.time()
         score = self.__scan_del_mvnans_fill_until()
+        print("up", time.time() - s_t)
+        s_t = time.time()
         self.__shuffle_until_possible()
+        print("shuffle", time.time() - s_t)
         return score
 
     def __get_matches(self):
@@ -982,7 +1005,10 @@ class Game(AbstractGame):
         return score
 
     def __shuffle_until_possible(self):
+        import time
+        s_t = time.time()
         possible_moves = self.__get_possible_moves()
+        print("find possible moves", time.time() - s_t)
         while len(possible_moves) == 0:
             self.board.shuffle(self.__random_state)
             self.__scan_del_mvnans_fill_until()

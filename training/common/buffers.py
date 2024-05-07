@@ -250,6 +250,9 @@ class RolloutBuffer(BaseBuffer):
         # in David Silver Lecture 4: https://www.youtube.com/watch?v=PnHCvfgC_ZA
         self.returns = self.advantages + self.values
 
+    def compute_rewards(self, reward: dict) -> int:
+        return reward["damage_on_monster"]
+
     def add(
         self,
         obs: np.ndarray,
@@ -283,7 +286,7 @@ class RolloutBuffer(BaseBuffer):
 
         self.observations[self.pos] = np.array(obs)
         self.actions[self.pos] = np.array(action)
-        self.rewards[self.pos] = np.array(reward)
+        self.rewards[self.pos] = np.array(self.compute_rewards(reward))
         self.episode_starts[self.pos] = np.array(episode_start)
         self.values[self.pos] = value.clone().cpu().numpy().flatten()
         self.log_probs[self.pos] = log_prob.clone().cpu().numpy()

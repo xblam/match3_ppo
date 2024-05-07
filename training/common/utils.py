@@ -483,6 +483,8 @@ def obs_as_tensor(obs: Union[np.ndarray, Dict[str, np.ndarray]], device: torch.d
         return torch.as_tensor(obs, device=device)
     elif isinstance(obs, dict):
         return {key: torch.as_tensor(_obs, device=device) for (key, _obs) in obs.items()}
+    elif isinstance(obs, torch.Tensor):
+        return obs.to(device)
     else:
         raise Exception(f"Unrecognized type of observation {type(obs)}")
 

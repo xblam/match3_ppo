@@ -163,6 +163,7 @@ class PPO(OnPolicyAlgorithm):
         self.batch_size = batch_size
         self.n_epochs = n_epochs
         self.clip_range = clip_range
+        print("abc", self.clip_range)
         self.clip_range_vf = clip_range_vf
         self.normalize_advantage = normalize_advantage
         self.target_kl = target_kl
@@ -172,6 +173,14 @@ class PPO(OnPolicyAlgorithm):
 
     def _setup_model(self) -> None:
         super()._setup_model()
+
+        self.lr_scheduler = th.optim.lr_scheduler.CosineAnnealingLR(
+            self.policy.optimizer,
+            T_max=100,
+            eta_min = 1e-7, # Minimum learning rate
+            last_epoch = -1,
+            verbose=True
+        )
 
         # Initialize schedules for policy/value clipping
         self.clip_range = get_schedule_fn(self.clip_range)

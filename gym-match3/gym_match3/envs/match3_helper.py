@@ -3,20 +3,19 @@ import torch
 import numpy as np
 
 from gym_match3.envs.constants import GameObject
+from gym_match3.envs.game import AbstractMonster
 
 
-class M3CnnHelper():
+class M3Helper():
     def __init__(self, num_row: int = 10, num_col: int = 9) -> None:
         self.num_row = num_row
         self.num_col = num_col
         self.num_action = (self.num_row - 1) * self.num_col + self.num_row * (self.num_col - 1)
-        self.obs_order = ["none_tile", "attackable_tile", 
-                          "color_1", "color_2", "color_3", "color_4", "color_5", 
+        self.obs_order = ["none_tile", "color_1", "color_2", "color_3", "color_4", "color_5",
                           "disco", "bomb", "missile_h", "missile_v", "plane", 
-                          "blocker_3", "blocker_2", "blocker_1", 
-                          "ninja", "sumo", "tanker", "pop_mortar", "ebony", "ivory", "merlin", 
+                          "blocker", "monster", "monster_dmg_mask", "self_dmg_mask", 
                           "match_normal", "match_2x2", "match_4_v", "match_4_h", "match_L", "match_T", "match_5", 
-                          "legal_action", "mask"]
+                          "legal_action"]
         
     def _from_action_to_tile(self):
         a2t = {}
@@ -38,16 +37,15 @@ class M3CnnHelper():
 
         return a2t
 
-    def check_legal_pos_to_move(self, i: int, j: int, raw_board: list[dict]):
-        index = i * self.num_col + j
+    def check_legal_pos_to_move(self, i: int, j: int, raw_board: np.array):
         return 0 <= i and i < self.num_row\
                 and 0 <= j and j < self.num_col\
                 and (
-                    raw_board[index]["class"] == Constants.CLASS_ID_TILE\
-                    or raw_board[index]["class"] == Constants.CLASS_ID_BOOSTER
+                    raw_board[i][j] in GameObject.powers\
+                    or raw_board[i][j] in GameObject.tiles
                 )
     
-    def check_required_tile(self, color_board: list[list[int]], raw_board: list[dict], i: int, j: int, check_type: list[tuple[int, int]]):
+    def check_required_tile(self, color_board: list[list[int]], raw_board: np.array, i: int, j: int, check_type: list[tuple[int, int]]):
         # if color_board[0][0] == 1:
             #print("\t",i, j)
         for x, y in check_type:
@@ -376,7 +374,7 @@ class M3CnnHelper():
         )
 
 
-    def _format_observation(self, board: np, device, first_horizontal: int = 0):
+    def _format_observation(self, board: np.array, list_monsters: list[AbstractMonster], device):
         """
         A utility function to process observations and move them to CUDA.
         """
@@ -387,7 +385,7 @@ class M3CnnHelper():
         if not device == "cpu":
             device = 'cuda:' + str(device)
 
-        action_space = [0] * self.num_action
+        action_space = np.zeros((self.num_action))
         obs = {
             "none_tile": (board == GameObject.immovable_shape),
             "color_1": (board == GameObject.color1),
@@ -414,6 +412,7 @@ class M3CnnHelper():
             "monster_dmg_mask": np.zeros((self.num_row, self.num_col)),
             "self_dmg_mask": np.zeros((self.num_row, self.num_col)),
 
+            "match_normal": np.zeros((self.num_row, self.num_col)),
             "match_2x2": np.zeros((self.num_row, self.num_col)),
             "match_4_v": np.zeros((self.num_row, self.num_col)),
             "match_4_h": np.zeros((self.num_row, self.num_col)),
@@ -424,46 +423,20 @@ class M3CnnHelper():
             "legal_action": np.zeros((self.num_row, self.num_col)),
         }
 
-        obs["none_tile"] = 
-                case Constants.TILE_NONE:
-                    obs["none_tile"][r][c] = 1
-                    obs["attackable_tile"][r][c] = 0
+        for _mons in list_monsters:
+            for p in _mons.dmg_mask:
+                obs["monster_dmg_mask"][p.get_coord()] = 1
+            for p in _mons.inside_dmg_mask:
+                obs["monster_dmg_mask"][p.get_coord()] = 1
 
-                case Constants.CLASS_ID_TILE:
-                    obs[f"color_{tile['color']}"][r][c] = 1
+            for p in _mons.cause_dmg_mask:
+                obs["self_dmg_mask"][p.get_coord()] = 1
 
-                case Constants.CLASS_ID_BLOCKER:
-                    obs[f"blocker_{max(min(tile['hp'], 3), 1)}"][r][c] = 1
+        for r in range(self.num_row):
+            for c in range(self.num_col):
+                tile = board[r][c]
 
-                case Constants.CLASS_ID_MONSTER:
-                    #match case for monster
-                    match tile["type"]:
-                        case Constants.MONSTER_ID_SUMO:
-                            obs["sumo"][r][c] = 1
-                        case Constants.MONSTER_ID_NINJA:
-                            obs["ninja"][r][c] = 1
-                        case Constants.MONSTER_ID_TANKER:
-                            obs["tanker"][r][c] = 1
-                        case Constants.MONSTER_ID_POP_MORTAR:
-                            obs["pop_mortar"][r][c] = 1
-                        case Constants.MONSTER_ID_EBONY:
-                            obs["ebony"][r][c] = 1
-                        case Constants.MONSTER_ID_IVORY:
-                            obs["ivory"][r][c] = 1
-                        case Constants.MONSTER_ID_MERLIN:
-                            obs["merlin"][r][c] = 1
-
-                case Constants.CLASS_ID_BOOSTER:
-                    #match case for booster
-                    match tile["type"]:
-                        case Constants.BOOSTER_TYPE_DISCO:
-                            obs["disco"][r][c] = 1
-                        case Constants.BOOSTER_TYPE_BOMB:
-                            obs["bomb"][r][c] = 1
-                        case Constants.BOOSTER_TYPE_MISSILE:
-                            obs[f"missile_{'h' if tile['direction'] == 2 else 'v'}"][r][c] = 1
-                        case Constants.BOOSTER_TYPE_PLANE:
-                            obs["plane"][r][c] = 1
+                if tile in GameObject.powers:
                     for i in [-1, 1]:
                         if self.check_legal_pos_to_move(r, c + i, board):
                             obs["legal_action"][r][c] = 1
@@ -497,36 +470,6 @@ class M3CnnHelper():
         
     def obs_to_tensor(self, obs):
         obs_tensor = torch.stack((
-            torch.Tensor(obs["none_tile"]),
-            torch.Tensor(obs["attackable_tile"]),
-            torch.Tensor(obs["color_1"]),
-            torch.Tensor(obs["color_2"]),
-            torch.Tensor(obs["color_3"]),
-            torch.Tensor(obs["color_4"]),
-            torch.Tensor(obs["color_5"]),
-            torch.Tensor(obs["disco"]),
-            torch.Tensor(obs["bomb"]),
-            torch.Tensor(obs["missile_h"]),
-            torch.Tensor(obs["missile_v"]),
-            torch.Tensor(obs["plane"]),
-            torch.Tensor(obs["blocker_3"]),
-            torch.Tensor(obs["blocker_2"]),
-            torch.Tensor(obs["blocker_1"]),
-            torch.Tensor(obs["ninja"]),
-            torch.Tensor(obs["sumo"]),
-            torch.Tensor(obs["tanker"]),
-            torch.Tensor(obs["pop_mortar"]),
-            torch.Tensor(obs["ebony"]),
-            torch.Tensor(obs["ivory"]),
-            torch.Tensor(obs["merlin"]),
-            torch.Tensor(obs["match_normal"]),
-            torch.Tensor(obs["match_2x2"]),
-            torch.Tensor(obs["match_4_v"]),
-            torch.Tensor(obs["match_4_h"]),
-            torch.Tensor(obs["match_L"]),
-            torch.Tensor(obs["match_T"]),
-            torch.Tensor(obs["match_5"]),
-            torch.Tensor(obs["legal_action"]),
-            torch.Tensor(obs["mask"]),
+            [torch.Tensor(obs[attr]) for attr in self.obs_order]
         ))
         return obs_tensor

@@ -18,7 +18,7 @@ from training.common.distributions import (
     Distribution,
     make_proba_distribution,
 )
-from training.common.preprocessing import get_action_dim, is_image_space, maybe_transpose, preprocess_obs
+from training.common.preprocessing import get_action_dim, is_image_space, preprocess_obs
 from training.common.torch_layers import (
     BaseFeaturesExtractor,
     CombinedExtractor,
@@ -527,7 +527,7 @@ class ActorCriticPolicy(BasePolicy):
         self.dist_kwargs = dist_kwargs
 
         # Action distribution
-        self.action_dist = make_proba_distribution(action_space, use_sde=use_sde, dist_kwargs=dist_kwargs)
+        self.action_dist = make_proba_distribution(action_space, use_sde=use_sde, have_illegal=True, dist_kwargs=dist_kwargs)
 
         self._build(lr_schedule)
 
@@ -613,7 +613,7 @@ class ActorCriticPolicy(BasePolicy):
         # Setup optimizer with initial learning rate
         self.optimizer = self.optimizer_class(self.parameters(), lr=lr_schedule(1), **self.optimizer_kwargs)  # type: ignore[call-arg]
 
-    def forward(self, obs: torch.Tensor, deterministic: bool = False) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    def forward(self, obs: torch.Tensor, legal_action: torch.Tensor = None, deterministic: bool = False) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         """
         Forward pass in all the networks (actor and critic)
 
@@ -631,7 +631,7 @@ class ActorCriticPolicy(BasePolicy):
             latent_vf = self.mlp_extractor.forward_critic(vf_features)
         # Evaluate the values for the given observations
         values = self.value_net(latent_vf)
-        distribution = self._get_action_dist_from_latent(latent_pi)
+        distribution = self._get_action_dist_from_latent(latent_pi, legal_action=legal_action)
         actions = distribution.get_actions(deterministic=deterministic)
         log_prob = distribution.log_prob(actions)
         actions = actions.reshape((-1, *self.action_space.shape))  # type: ignore[misc]
@@ -661,7 +661,7 @@ class ActorCriticPolicy(BasePolicy):
             vf_features = super().extract_features(obs, self.vf_features_extractor)
             return pi_features, vf_features
 
-    def _get_action_dist_from_latent(self, latent_pi: torch.Tensor) -> Distribution:
+    def _get_action_dist_from_latent(self, latent_pi: torch.Tensor, legal_action: torch.Tensor = None) -> Distribution:
         """
         Retrieve action distribution given the latent codes.
 
@@ -675,7 +675,7 @@ class ActorCriticPolicy(BasePolicy):
             return self.action_dist.proba_distribution(action_logits=mean_actions)
         elif isinstance(self.action_dist, MaskedCategoricalDistribution):
             # Here mean_actions are the flattened logits
-            return self.action_dist.proba_distribution(action_logits=mean_actions)
+            return self.action_dist.proba_distribution(action_logits=mean_actions, legal_action=legal_action)
         else:
             raise ValueError("Invalid action distribution")
 

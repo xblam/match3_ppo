@@ -151,7 +151,7 @@ class BaseAlgorithm(ABC):
         # Create and wrap the env if needed
         if env is not None:
             env = maybe_make_env(env, self.verbose)
-            env = self._wrap_env(env, self.verbose, monitor_wrapper)
+            # env = self._wrap_env(env, self.verbose, monitor_wrapper)
 
             self.observation_space = env.observation_space
             self.action_space = env.action_space
@@ -384,7 +384,7 @@ class BaseAlgorithm(ABC):
         """
         # if it is not a VecEnv, make it a VecEnv
         # and do other transformations (dict obs, image transpose) if needed
-        env = self._wrap_env(env, self.verbose)
+        # env = self._wrap_env(env, self.verbose)
         assert env.num_envs == self.n_envs, (
             "The number of environments to be set is different from the number of environments in the model: "
             f"({env.num_envs} != {self.n_envs}), whereas `set_env` requires them to be the same. To load a model with "
