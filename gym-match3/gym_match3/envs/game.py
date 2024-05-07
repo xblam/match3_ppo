@@ -488,7 +488,7 @@ class MatchesSearcher(AbstractSearcher):
         matches = set()
         new_power_ups = dict()
         for point in self.points_generator(board):
-            to_del, to_add = self.__get_match3_for_point(board, point)
+            to_del, to_add = self.__get_match3_for_point(board, point, need_all=need_all)
             # print(_)
             if to_del:
                 matches.update(to_del)
@@ -498,14 +498,19 @@ class MatchesSearcher(AbstractSearcher):
 
         return matches, new_power_ups
 
-    def __get_match3_for_point(self, board: Board, point: Point):
+    def __get_match3_for_point(self, board: Board, point: Point, need_all: bool = True):
         shape = board.get_shape(point)
         match3_list = []
         power_up_list: dict[Point, int] = {}
-        for neighbours, length, idx in self.__generator_neighbours(board, point):
+        early_stop = False
+
+        for neighbours, length, idx in self.__generator_neighbours(board, point, early_stop):
             filtered = self.__filter_cells_by_shape(shape, neighbours)
             if len(filtered) == length:
                 match3_list.extend(filtered)
+
+                if not need_all:
+                    early_stop = True
 
                 if length > 2 and idx != -1 and isinstance(point, Point):
                     if point in power_up_list.keys():
@@ -518,7 +523,7 @@ class MatchesSearcher(AbstractSearcher):
 
         return match3_list, power_up_list
 
-    def __generator_neighbours(self, board: Board, point: Point):
+    def __generator_neighbours(self, board: Board, point: Point, early_stop: bool = False):
         for idx, axis_dirs in enumerate(self.directions):
             new_points = [point + Point(*dir_) for dir_ in axis_dirs]
             try:
@@ -527,6 +532,8 @@ class MatchesSearcher(AbstractSearcher):
             except OutOfBoardError:
                 continue
             finally:
+                if early_stop:  # Check if flag is set to exit generator
+                    break
                 yield [], 0, -1
 
     @staticmethod
