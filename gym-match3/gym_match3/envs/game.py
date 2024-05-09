@@ -911,7 +911,7 @@ class Game(AbstractGame):
         elif isinstance(board, Board):
             self.board = board
         self.__operate_until_possible_moves()
-        self.list_monsters = list_monsters
+        self.list_monsters = copy.deepcopy(list_monsters)
 
         return self
 
