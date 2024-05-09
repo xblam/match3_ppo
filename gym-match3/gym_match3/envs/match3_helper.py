@@ -58,7 +58,7 @@ class M3Helper():
         return True
     
 
-    def check_match(self,  raw_board: list[dict],
+    def check_match(self,  raw_board: np.array,
                            color_board: list[list[int]], 
                            match_normal: list[list[int]],
                            match_2x2: list[list[int]],

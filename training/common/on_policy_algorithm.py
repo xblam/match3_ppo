@@ -158,8 +158,8 @@ class OnPolicyAlgorithm(BaseAlgorithm):
 
         n_steps = 0
         rollout_buffer.reset()
-        self._last_obs, _ = env.reset()
-        action_space = _["action_space"]
+        self._last_obs, infos = env.reset()
+        action_space = infos["action_space"]
         # Sample new weights for the state dependent exploration
         if self.use_sde:
             self.policy.reset_noise(env.num_envs)

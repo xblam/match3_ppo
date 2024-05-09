@@ -123,14 +123,18 @@ class Match3Env(gym.Env):
         print(m3_action)
         ob = {}
         reward = self.__swap(*m3_action)
+        is_early_done_game = self.__game._sweep_died_monster()
 
         # change counter even action wasn't successful
         self.__episode_counter += 1
-        if self.__episode_counter >= self.rollout_len:
+        if self.__episode_counter >= self.rollout_len or is_early_done_game:
             episode_over = True
             self.__episode_counter = 0
-            ob["board"] = self.reset()
-            ob["list_monster"] = self.__game.list_monsters
+            obs, infos = self.reset()
+            reward.update({
+                "game": (-5 * len(self.__game.list_monsters) if self.__game.list_monsters else 30)
+            })
+            return obs, reward, episode_over, infos
         else:
             episode_over = False
             ob["board"] = self.__get_board()

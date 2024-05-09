@@ -743,6 +743,7 @@ class AbstractMonster(ABC):
 
     # @abstractmethod
     def attacked(self, damage):
+        assert self._hp > 0, f"self._hp need to be positive, but self._hp = {self._hp}"
         self._hp -= damage
 
     @staticmethod
@@ -772,6 +773,9 @@ class AbstractMonster(ABC):
         for i in range(width):
             mask.append(point + Point(1, i))
         return mask
+    
+    def get_hp(self):
+        return self._hp
     
     def get_dame(self, matches, brokens):
         __matches = [ele.point for ele in matches]
@@ -969,8 +973,24 @@ class Game(AbstractGame):
         #TODO brokes, 
         return matches, new_power_ups
     
-    def __sweep_died_monster(self):
-        pass
+    def _sweep_died_monster(self):
+        mons_points = set()
+        alive_flag = False
+        for i in range(len(self.list_monsters)):
+            if self.list_monsters[i].get_hp() > 0:
+                alive_flag = True
+            else:
+                mons_points.update(self.list_monsters[i].inside_dmg_mask)
+                del self.list_monsters[i]
+
+        if alive_flag:
+            self.board.delete(set(mons_points))
+            
+            self.__filler.move_and_fill(self.board)
+            self.__operate_until_possible_moves()
+        else:
+            return True
+        return False
 
     def __get_copy_of_board(self):
         return copy.deepcopy(self.board)
