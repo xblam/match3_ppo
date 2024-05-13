@@ -957,7 +957,7 @@ class Game(AbstractGame):
             self.__operate_until_possible_moves()
 
         
-        print("refill", time.time() - s_t)
+        # print("refill", time.time() - s_t)
 
         return {
             "score": score,
@@ -1000,13 +1000,13 @@ class Game(AbstractGame):
         scan board, then delete matches, move nans, fill
         repeat until no matches and appear possible moves
         """
-        import time
-        s_t = time.time()
+        # import time
+        # s_t = time.time()
         score = self.__scan_del_mvnans_fill_until()
-        print("up", time.time() - s_t)
-        s_t = time.time()
+        # print("up", time.time() - s_t)
+        # s_t = time.time()
         self.__shuffle_until_possible()
-        print("shuffle", time.time() - s_t)
+        # print("shuffle", time.time() - s_t)
         return score
 
     def __get_matches(self):
@@ -1032,10 +1032,10 @@ class Game(AbstractGame):
         return score
 
     def __shuffle_until_possible(self):
-        import time
-        s_t = time.time()
+        # import time
+        # s_t = time.time()
         possible_moves = self.__get_possible_moves()
-        print("find possible moves", time.time() - s_t)
+        # print("find possible moves", time.time() - s_t)
         while len(possible_moves) == 0:
             self.board.shuffle(self.__random_state)
             self.__scan_del_mvnans_fill_until()

@@ -32,6 +32,8 @@ class RolloutBufferSamples(NamedTuple):
     advantages: torch.Tensor
     returns: torch.Tensor
 
+    legal_actions: torch.Tensor
+
 
 class DictRolloutBufferSamples(NamedTuple):
     observations: TensorDict

@@ -5,6 +5,7 @@ import numpy as np
 import torch as th
 from gymnasium import spaces
 from torch.nn import functional as F
+import datetime
 
 from training.common.buffers import RolloutBuffer
 from training.common.on_policy_algorithm import OnPolicyAlgorithm
@@ -12,7 +13,14 @@ from training.common.policies import ActorCriticCnnPolicy, ActorCriticPolicy, Ba
 from training.common.type_aliases import GymEnv, Schedule
 from training.common.utils import explained_variance, get_schedule_fn
 
+from training.common import utils
+import wandb
+logger = utils.configure_logger(1)
+
+
 SelfPPO = TypeVar("SelfPPO", bound="PPO")
+wandb.init(project="m3_with_cnn", 
+           name=f"ppo_m3_with_cnn_{datetime.datetime.today().strftime('%Y%m%d')}")
 
 
 class PPO(OnPolicyAlgorithm):
@@ -169,6 +177,7 @@ class PPO(OnPolicyAlgorithm):
 
         if _init_setup_model:
             self._setup_model()
+            self.set_logger(logger)
 
     def _setup_model(self) -> None:
         super()._setup_model()
@@ -189,14 +198,15 @@ class PPO(OnPolicyAlgorithm):
 
             self.clip_range_vf = get_schedule_fn(self.clip_range_vf)
 
+    def train_log(self, stats):
+        wandb.log(stats)
+
     def train(self) -> None:
         """
         Update policy using the currently gathered rollout buffer.
         """
         # Switch to train mode (this affects batch norm / dropout)
         self.policy.set_training_mode(True)
-        # Update optimizer learning rate
-        self._update_learning_rate(self.policy.optimizer)
         # Compute current clip range
         clip_range = self.clip_range(self._current_progress_remaining)  # type: ignore[operator]
         # Optional: clip range for the value function
@@ -205,6 +215,7 @@ class PPO(OnPolicyAlgorithm):
 
         entropy_losses = []
         pg_losses, value_losses = [], []
+        mean_values, mean_returns, mean_advantage = [], [], []
         clip_fractions = []
 
         continue_training = True
@@ -213,6 +224,10 @@ class PPO(OnPolicyAlgorithm):
             approx_kl_divs = []
             # Do a complete pass on the rollout buffer
             for rollout_data in self.rollout_buffer.get(self.batch_size):
+                if epoch == 0:
+                    mean_values.extend(rollout_data.old_values.cpu().flatten().tolist())
+                    mean_returns.extend(rollout_data.returns.cpu().flatten().tolist())
+                    mean_advantage.extend(rollout_data.advantages.cpu().flatten().tolist())
                 actions = rollout_data.actions
                 if isinstance(self.action_space, spaces.Discrete):
                     # Convert discrete action from float to long
@@ -222,7 +237,7 @@ class PPO(OnPolicyAlgorithm):
                 if self.use_sde:
                     self.policy.reset_noise(self.batch_size)
 
-                values, log_prob, entropy = self.policy.evaluate_actions(rollout_data.observations, actions)
+                values, log_prob, entropy = self.policy.evaluate_actions(rollout_data.observations, actions, rollout_data.legal_actions)
                 values = values.flatten()
                 # Normalize advantage
                 advantages = rollout_data.advantages
@@ -292,6 +307,10 @@ class PPO(OnPolicyAlgorithm):
             self._n_updates += 1
             if not continue_training:
                 break
+        
+        
+        # Update optimizer learning rate
+        self.lr_scheduler.step()
 
         explained_var = explained_variance(self.rollout_buffer.values.flatten(), self.rollout_buffer.returns.flatten())
 
@@ -310,6 +329,34 @@ class PPO(OnPolicyAlgorithm):
         self.logger.record("train/clip_range", clip_range)
         if self.clip_range_vf is not None:
             self.logger.record("train/clip_range_vf", clip_range_vf)
+
+        stats = {
+            "lr":self.lr_scheduler.get_lr()[-1], 
+            "Train/entropy_loss":np.mean(entropy_losses),
+            "Train/policy_gradient_loss":np.mean(pg_losses),
+            "Train/value_loss":np.mean(value_losses),
+            "Train/approx_kl":np.mean(approx_kl_divs),
+            "Train/clip_fraction":np.mean(clip_fractions),
+            "Train/loss":loss.item(),
+            # "Train/explained_variance":explained_var,
+            "Train/clip_range":clip_range,
+            "Train/n_updates":self._n_updates,
+            "Train/explained_variance": explained_var,
+
+            "Reward/advantages":np.mean(mean_advantage),
+            "Reward/returns":np.mean(mean_returns),
+            "Reward/values":np.mean(mean_values),
+        }
+        # if hasattr(self._policy, "log_std"):
+        #     stats["train/std"]=th.exp(self._policy.log_std).mean().item(),
+
+        if self.clip_range_vf is not None:
+            stats["train/clip_range_vf"]=clip_range_vf
+
+        self.train_log(stats)
+
+        if self._n_updates % 5:
+            self._policy.save(path=".\\bot\logic\m3cnn\model\_saved_model\model.pt")
 
     def learn(
         self: SelfPPO,

@@ -52,6 +52,7 @@ class BaseBuffer(ABC):
         self.obs_shape = get_obs_shape(observation_space)  # type: ignore[assignment]
 
         self.action_dim = get_action_dim(action_space)
+        self.action_space_size = action_space.n
         self.pos = 0
         self.full = False
         self.device = get_device(device)
@@ -210,6 +211,8 @@ class RolloutBuffer(BaseBuffer):
         self.values = np.zeros((self.buffer_size, self.n_envs), dtype=np.float32)
         self.log_probs = np.zeros((self.buffer_size, self.n_envs), dtype=np.float32)
         self.advantages = np.zeros((self.buffer_size, self.n_envs), dtype=np.float32)
+
+        self.legal_actions = np.zeros((self.buffer_size, self.n_envs, self.action_space_size), dtype=np.float32)
         self.generator_ready = False
         super().reset()
 
@@ -261,6 +264,7 @@ class RolloutBuffer(BaseBuffer):
         episode_start: np.ndarray,
         value: torch.Tensor,
         log_prob: torch.Tensor,
+        legal_actions: torch.Tensor
     ) -> None:
         """
         :param obs: Observation
@@ -290,6 +294,8 @@ class RolloutBuffer(BaseBuffer):
         self.episode_starts[self.pos] = np.array(episode_start)
         self.values[self.pos] = value.clone().cpu().numpy().flatten()
         self.log_probs[self.pos] = log_prob.clone().cpu().numpy()
+        
+        self.legal_actions[self.pos] = np.array(legal_actions)
         self.pos += 1
         if self.pos == self.buffer_size:
             self.full = True
@@ -306,6 +312,8 @@ class RolloutBuffer(BaseBuffer):
                 "log_probs",
                 "advantages",
                 "returns",
+
+                "legal_actions"
             ]
 
             for tensor in _tensor_names:
@@ -333,6 +341,8 @@ class RolloutBuffer(BaseBuffer):
             self.log_probs[batch_inds].flatten(),
             self.advantages[batch_inds].flatten(),
             self.returns[batch_inds].flatten(),
+
+            self.legal_actions[batch_inds]
         )
         return RolloutBufferSamples(*tuple(map(self.to_torch, data)))
 

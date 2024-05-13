@@ -224,6 +224,7 @@ class OnPolicyAlgorithm(BaseAlgorithm):
                 self._last_episode_starts,  # type: ignore[arg-type]
                 values,
                 log_probs,
+                action_space
             )
             self._last_obs = new_obs  # type: ignore[assignment]
             self._last_episode_starts = dones
