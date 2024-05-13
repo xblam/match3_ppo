@@ -21,7 +21,7 @@ def get_args():
     return parser.parse_args()
 
 args = get_args()
-env = Match3Env()
+env = Match3Env(30)
 
 print(env.observation_space)
 print(env.action_space)

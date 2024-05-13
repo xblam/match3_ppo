@@ -1,1 +1,1 @@
-python training.py --n_steps 32 --lr 3e-3
+python training.py --n_steps 512 --lr 3e-3

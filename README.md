@@ -56,3 +56,4 @@ Thanks for [kamildar/gym-match3](https://github.com/kamildar/gym-match3) publish
     ```
 
 ## M3 Training
+- To understand board on `wandb`, you can follow [stackexchange](https://datascience.stackexchange.com/questions/115243/understanding-the-tensorboard-plots-on-a-stable-baseline3s-ppo).

@@ -450,6 +450,14 @@ class AbstractSearcher(ABC):
     @property
     def directions(self):
         return self.__disco_directions + self.__bomb_directions + self.__missile_directions + self.__plane_directions + self.__directions
+    
+    @property
+    def normal_directions(self):
+        return self.__directions
+    
+    @property
+    def plane_directions(self):
+        return self.__plane_directions
 
     @staticmethod
     def points_generator(board: Board):
@@ -504,7 +512,7 @@ class MatchesSearcher(AbstractSearcher):
         power_up_list: dict[Point, int] = {}
         early_stop = False
 
-        for neighbours, length, idx in self.__generator_neighbours(board, point, early_stop):
+        for neighbours, length, idx in self.__generator_neighbours(board, point, early_stop, ~need_all):
             filtered = self.__filter_cells_by_shape(shape, neighbours)
             if len(filtered) == length:
                 match3_list.extend(filtered)
@@ -523,18 +531,18 @@ class MatchesSearcher(AbstractSearcher):
 
         return match3_list, power_up_list
 
-    def __generator_neighbours(self, board: Board, point: Point, early_stop: bool = False):
-        for idx, axis_dirs in enumerate(self.directions):
-            new_points = [point + Point(*dir_) for dir_ in axis_dirs]
-            try:
-                yield [Cell(board.get_shape(new_p), *new_p.get_coord())
-                       for new_p in new_points], len(axis_dirs), idx
-            except OutOfBoardError:
-                continue
-            finally:
-                if early_stop:  # Check if flag is set to exit generator
-                    break
-                yield [], 0, -1
+    def __generator_neighbours(self, board: Board, point: Point, early_stop: bool = False, only_2_matches: bool = False):
+            for idx, axis_dirs in enumerate(self.normal_directions + self.plane_directions if only_2_matches else self.directions):
+                new_points = [point + Point(*dir_) for dir_ in axis_dirs]
+                try:
+                    yield [Cell(board.get_shape(new_p), *new_p.get_coord())
+                        for new_p in new_points], len(axis_dirs), idx
+                except OutOfBoardError:
+                    continue
+                finally:
+                    if early_stop:  # Check if flag is set to exit generator
+                        break
+                    yield [], 0, -1
 
     @staticmethod
     def __filter_cells_by_shape(shape, *args):
@@ -628,7 +636,6 @@ class MovesSearcher(AbstractMovesSearcher, MatchesSearcher):
 
     def __search_moves_for_point(self, board: Board, point: Point, need_all=True):
         # contain tuples of point and direction
-        print(need_all)
         possible_moves = set()
         for direction in self.directions_gen():
             try:
@@ -976,18 +983,21 @@ class Game(AbstractGame):
     def _sweep_died_monster(self):
         mons_points = set()
         alive_flag = False
+        died_flag = False
         for i in range(len(self.list_monsters)):
             if self.list_monsters[i].get_hp() > 0:
                 alive_flag = True
             else:
+                died_flag = True
                 mons_points.update(self.list_monsters[i].inside_dmg_mask)
                 del self.list_monsters[i]
 
         if alive_flag:
-            self.board.delete(set(mons_points))
-            
-            self.__filler.move_and_fill(self.board)
-            self.__operate_until_possible_moves()
+            if died_flag:
+                self.board.delete(set(mons_points))
+                
+                self.__filler.move_and_fill(self.board)
+                self.__operate_until_possible_moves()
         else:
             return True
         return False
@@ -1032,11 +1042,12 @@ class Game(AbstractGame):
         return score
 
     def __shuffle_until_possible(self):
-        # import time
-        # s_t = time.time()
+        import time
+        s_t = time.time()
         possible_moves = self.__get_possible_moves()
-        # print("find possible moves", time.time() - s_t)
+        print("find possible moves", time.time() - s_t)
         while len(possible_moves) == 0:
+            print("not hvae move")
             self.board.shuffle(self.__random_state)
             self.__scan_del_mvnans_fill_until()
             possible_moves = self.__get_possible_moves()

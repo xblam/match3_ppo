@@ -132,7 +132,7 @@ class Match3Env(gym.Env):
             self.__episode_counter = 0
             obs, infos = self.reset()
             reward.update({
-                "game": (-5 * len(self.__game.list_monsters) if self.__game.list_monsters else 30)
+                "game": (-30 * len(self.__game.list_monsters) if self.__game.list_monsters else 30)
             })
             return obs, reward, episode_over, infos
         else:
