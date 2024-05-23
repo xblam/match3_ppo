@@ -122,7 +122,7 @@ class Match3Env(gym.Env):
         # make action
         s_t = time.time()
         m3_action = self.__get_action(action)
-        print(m3_action)
+        # print(m3_action) #openlater
         ob = {}
         reward = self.__swap(*m3_action)
         is_early_done_game = self.__game._sweep_died_monster()
@@ -143,7 +143,7 @@ class Match3Env(gym.Env):
                     "game": (-30 - 1 * sum([mon.get_hp() for mon in self.__game.list_monsters]) if num_alive_mons > 0 else 30 + 10 * self.__game.num_mons)
                 })
             
-            print(reward)
+            # print(reward) #openlater
             self.result_step += 1
             obs, infos = self.reset()
             

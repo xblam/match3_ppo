@@ -44,9 +44,9 @@ PPO_trainer = PPO(
             "num_first_cnn_layer": 4
         },
         "optimizer_class": torch.optim.Adam,
-        "share_features_extractor": False
+        "share_features_extractor": True
     },
-    wandb=args.wandb,
+    _wandb=args.wandb,
     device="cuda"
 )
 

@@ -872,7 +872,8 @@ class DameMonster(AbstractMonster):
             self._hp += self._cancel # because of negative __cancel
             self._cancel = self._cancel_dame
             return {
-                "damage": 0
+                "damage": 0,
+                "cancel_score": 2,
             }
         
         if self._progress > self._relax_interval + self._setup_interval:
@@ -944,7 +945,7 @@ class AbstractGame(ABC):
 
 class Game(AbstractGame):
     def __init__(self, rows, columns, n_shapes, length,
-                 player_hp=60,
+                 player_hp=40,
                  all_moves=False,
                  immovable_shape=-1,
                  random_state=None):
@@ -1007,6 +1008,7 @@ class Game(AbstractGame):
 
     def __move(self, point: Point, direction: Point):
         score = 0
+        cancel_score = 0
         dmg = 0
         self_dmg = 0
         
@@ -1019,7 +1021,9 @@ class Game(AbstractGame):
         for i in range(len(self.list_monsters)):
             dmg += self.list_monsters[i].get_dame(matches, brokens)
             self.list_monsters[i].attacked(dmg)
-            self_dmg += self.list_monsters[i].act()["damage"]
+            monster_result = self.list_monsters[i].act()
+            self_dmg += monster_result["damage"]
+            cancel_score += monster_result.get("cancel_score", 0)
 
         self.__player_hp -= self_dmg
 
@@ -1041,6 +1045,7 @@ class Game(AbstractGame):
             self.hit_dame += dmg
         reward = {
             "score": score,
+            "cancel_score": cancel_score,
             "damage_on_monster": dmg,
             "damage_on_user": self_dmg,
         }

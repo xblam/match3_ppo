@@ -1,1 +1,1 @@
-python training.py --n_steps 2048 --lr 3e-3 --wandb
+python training.py --n_steps 4096 --lr 3e-5 --wandb

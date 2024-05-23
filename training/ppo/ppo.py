@@ -109,7 +109,7 @@ class PPO(OnPolicyAlgorithm):
         policy_kwargs: Optional[Dict[str, Any]] = None,
         verbose: int = 0,
         seed: Optional[int] = None,
-        wandb: bool = False,
+        _wandb: bool = False,
         device: Union[th.device, str] = "auto",
         _init_setup_model: bool = True,
     ):
@@ -178,10 +178,10 @@ class PPO(OnPolicyAlgorithm):
             self._setup_model()
             self.set_logger(logger)
 
-        self.wandb = wandb
-        if wandb:
+        self._wandb = _wandb
+        if self._wandb:
             wandb.init(project="m3_with_cnn", 
-                       name=f"ppo_m3_with_cnn_{datetime.datetime.today().strftime('%Y%m%d')}")
+                       name=f"ppo_m3_with_cnn_{learning_rate}_{n_steps}_{'' if policy_kwargs['share_features_extractor'] else 'not_'}share_{datetime.datetime.today().strftime('%Y%m%d')}")
 
     def _setup_model(self) -> None:
         super()._setup_model()
@@ -203,7 +203,7 @@ class PPO(OnPolicyAlgorithm):
             self.clip_range_vf = get_schedule_fn(self.clip_range_vf)
 
     def train_log(self, stats):
-        if wandb:
+        if self._wandb:
             wandb.log(stats)
         pass
 
@@ -362,7 +362,7 @@ class PPO(OnPolicyAlgorithm):
         self.train_log(stats)
 
         if self._n_updates % 5:
-            self._policy.save(path=".\\bot\logic\m3cnn\model\_saved_model\model.pt")
+            self.policy.save(path=".\\bot\logic\m3cnn\model\_saved_model\model.pt")
 
     def learn(
         self: SelfPPO,
