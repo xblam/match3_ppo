@@ -12,11 +12,13 @@ from gym_match3.envs.match3_helper import M3Helper
 from itertools import product
 import warnings
 import time
+import wandb
 
 BOARD_NDIM = 2
 
 class Match3Env(gym.Env):
     metadata = {'render.modes': None}
+    result_step = 0
 
     def __init__(self, rollout_len=100, all_moves=False, levels=None, random_state=None):
         self.num_envs = 1
@@ -127,25 +129,36 @@ class Match3Env(gym.Env):
 
         # change counter even action wasn't successful
         self.__episode_counter += 1
-        if self.__episode_counter >= self.rollout_len or is_early_done_game:
+        if self.__episode_counter >= self.rollout_len or is_early_done_game or self.__game.get_player_hp() <= 0:
             episode_over = True
             self.__episode_counter = 0
+
+            num_alive_mons = len(self.__game.list_monsters)
+            if self.__game.get_player_hp() <= 0:
+                reward.update({
+                    "game": -100
+                })
+            else:
+                reward.update({
+                    "game": (-30 - 1 * sum([mon.get_hp() for mon in self.__game.list_monsters]) if num_alive_mons > 0 else 30 + 10 * self.__game.num_mons)
+                })
+            
+            print(reward)
+            self.result_step += 1
             obs, infos = self.reset()
-            reward.update({
-                "game": (-30 * len(self.__game.list_monsters) if self.__game.list_monsters else 30)
-            })
+            
             return obs, reward, episode_over, infos
         else:
             episode_over = False
             ob["board"] = self.__get_board()
             ob["list_monster"] = self.__game.list_monsters
         
-        print("play time", time.time() - s_t)
+        # print("play time", time.time() - s_t)
         s_t = time.time()
 
         obs = self.helper._format_observation(ob["board"], ob["list_monster"], "cpu")
 
-        print("process obs", time.time() - s_t)
+        # print("process obs", time.time() - s_t)
 
         return self.helper.obs_to_tensor(obs["obs"]), reward, episode_over, {
             "action_space": obs["action_space"]

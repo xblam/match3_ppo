@@ -225,6 +225,7 @@ class MlpExtractor(nn.Module):
         return self.policy_net(features)
 
     def forward_critic(self, features: torch.Tensor) -> torch.Tensor:
+        # print("weight critic", self.value_net[-2].state_dict()['weight'])
         return self.value_net(features)
 
 

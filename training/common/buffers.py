@@ -254,7 +254,12 @@ class RolloutBuffer(BaseBuffer):
         self.returns = self.advantages + self.values
 
     def compute_rewards(self, reward: dict) -> int:
-        return reward["damage_on_monster"] - reward["damage_on_user"] + reward.get("game", 0)
+        _reward = reward["score"] * 0.1 + reward["damage_on_monster"] - reward["damage_on_user"] + reward.get("game", 0)
+        target_min, target_max = -20, 10
+        reward_min, reward_max = -100, 50
+        new_reward = ((_reward - reward_min) / (reward_max - reward_min) * (target_max - target_min) + target_min)
+        print(new_reward)
+        return new_reward
 
     def add(
         self,

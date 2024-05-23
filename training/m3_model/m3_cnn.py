@@ -30,25 +30,26 @@ class M3CnnFeatureExtractor(nn.Module):
         
         layers = []
         layers.append(nn.Conv2d(in_channels.shape[0], kwargs["mid_channels"], 3, stride=1, padding=1)) # (batch, mid_channels, (size))
-        layers.append(nn.ReLU())
+        layers.append(nn.ELU())
         for _ in range(kwargs["num_first_cnn_layer"]):
             layers.append(nn.Conv2d(kwargs["mid_channels"], kwargs["mid_channels"], 3, stride=1, padding=1)) # (batch, mid_channels, (size))
-            layers.append(nn.ReLU())
+            layers.append(nn.ELU())
         layers.append(nn.Conv2d(kwargs["mid_channels"], kwargs["out_channels"], 3, stride=1, padding=1)) # (batch, out_channels, (size))
-        layers.append(nn.ReLU())
+        layers.append(nn.ELU())
         layers.append(M3Aap((1))) # (batch, out_channels)
-        layers.append(nn.GELU())
 
         self.net = nn.Sequential(*layers)
         self.features_dim = kwargs["out_channels"]
 
-        self.linear = nn.Sequential(nn.Linear(self.features_dim, self.features_dim), nn.ReLU())
+        # self.linear = nn.Sequential(nn.Linear(self.features_dim, self.features_dim), nn.ReLU())
+
+        self.sm = nn.Tanh()
 
     def forward(self, input: torch.Tensor):
         if len(input.shape) == 3:
             input = torch.unsqueeze(input, 0)
         x = self.net(input)
-        return self.linear(x)
+        return self.sm(x)
     
 class M3MlpExtractor(nn.Module):
     """

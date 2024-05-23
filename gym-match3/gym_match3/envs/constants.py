@@ -31,7 +31,7 @@ class GameObject:
 
 def mask_immov_mask(line, immovable_shape):
     immov_mask = (line == immovable_shape)
-    for _immov_obj in np.concatenate([GameObject.blockers, GameObject.monsters]):
+    for _immov_obj in GameObject.monsters:
         immov_mask |= (line == _immov_obj)
 
     return immov_mask

@@ -125,6 +125,25 @@ LEVELS = [
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, GameObject.monster_dame, GameObject.monster_dame, 0],
+        [0, 0, 0, 0, 0, 0, GameObject.monster_dame, GameObject.monster_dame, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0],
+    ], [
+        DameMonster(position=Point(6, 6),
+                    width=2,
+                    height=2,
+                    hp=50
+                    )
+    ]),
+
+    Level(10, 9, 5, [
+        [0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, GameObject.monster_dame, GameObject.monster_dame, 0, 0, 0],
         [0, 0, 0, 0, GameObject.monster_dame, GameObject.monster_dame, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -134,7 +153,71 @@ LEVELS = [
     ], [
         DameMonster(position=Point(4, 4),
                     width=2,
-                    height=2)
+                    height=2,
+                    hp=30
+                    )
+    ]),
+
+    Level(10, 9, 5, [
+        [0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, GameObject.monster_dame, GameObject.monster_dame, 0, 0, 0],
+        [0, 0, 0, 0, GameObject.monster_dame, GameObject.monster_dame, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0],
+    ], [
+        DameMonster(position=Point(4, 4),
+                    width=2,
+                    height=2,
+                    hp=50
+                    )
+    ]),
+
+    Level(10, 9, 5, [
+        [GameObject.monster_dame, GameObject.monster_dame, 0, 0, 0, 0, 0, 0, 0],
+        [GameObject.monster_dame, GameObject.monster_dame, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0],
+    ], [
+        DameMonster(position=Point(0, 0),
+                    width=2,
+                    height=2,
+                    hp=50
+                    )
+    ]),
+
+    Level(10, 9, 5, [
+        [GameObject.monster_dame, GameObject.monster_dame, 0, 0, 0, 0, 0, 0, 0],
+        [GameObject.monster_dame, GameObject.monster_dame, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, GameObject.monster_dame, GameObject.monster_dame, 0],
+        [0, 0, 0, 0, 0, 0, GameObject.monster_dame, GameObject.monster_dame, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0],
+    ], [
+        DameMonster(position=Point(0, 0),
+                    width=2,
+                    height=2,
+                    hp=30
+                    ),
+        DameMonster(position=Point(6, 6),
+                    width=2,
+                    height=2,
+                    hp=30
+                    )
     ]),
 
     # Level(10, 9, 5, [

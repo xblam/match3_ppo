@@ -19,8 +19,6 @@ logger = utils.configure_logger(1)
 
 
 SelfPPO = TypeVar("SelfPPO", bound="PPO")
-wandb.init(project="m3_with_cnn", 
-           name=f"ppo_m3_with_cnn_{datetime.datetime.today().strftime('%Y%m%d')}")
 
 
 class PPO(OnPolicyAlgorithm):
@@ -111,6 +109,7 @@ class PPO(OnPolicyAlgorithm):
         policy_kwargs: Optional[Dict[str, Any]] = None,
         verbose: int = 0,
         seed: Optional[int] = None,
+        wandb: bool = False,
         device: Union[th.device, str] = "auto",
         _init_setup_model: bool = True,
     ):
@@ -179,12 +178,17 @@ class PPO(OnPolicyAlgorithm):
             self._setup_model()
             self.set_logger(logger)
 
+        self.wandb = wandb
+        if wandb:
+            wandb.init(project="m3_with_cnn", 
+                       name=f"ppo_m3_with_cnn_{datetime.datetime.today().strftime('%Y%m%d')}")
+
     def _setup_model(self) -> None:
         super()._setup_model()
 
         self.lr_scheduler = th.optim.lr_scheduler.CosineAnnealingLR(
             self.policy.optimizer,
-            T_max=100,
+            T_max=1000,
             eta_min = 1e-7, # Minimum learning rate
             last_epoch = -1,
             verbose=True
@@ -199,7 +203,9 @@ class PPO(OnPolicyAlgorithm):
             self.clip_range_vf = get_schedule_fn(self.clip_range_vf)
 
     def train_log(self, stats):
-        wandb.log(stats)
+        if wandb:
+            wandb.log(stats)
+        pass
 
     def train(self) -> None:
         """

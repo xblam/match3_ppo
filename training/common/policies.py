@@ -630,6 +630,9 @@ class ActorCriticPolicy(BasePolicy):
             latent_pi = self.mlp_extractor.forward_actor(pi_features)
             latent_vf = self.mlp_extractor.forward_critic(vf_features)
         # Evaluate the values for the given observations
+        
+        # print("pi_features", pi_features)
+        # print("vf_features", vf_features)
         values = self.value_net(latent_vf)
         distribution = self._get_action_dist_from_latent(latent_pi, legal_action=legal_action)
         actions = distribution.get_actions(deterministic=deterministic)

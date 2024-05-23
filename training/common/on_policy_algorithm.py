@@ -159,6 +159,7 @@ class OnPolicyAlgorithm(BaseAlgorithm):
         n_steps = 0
         rollout_buffer.reset()
         self._last_obs, infos = env.reset()
+        dones = False
         action_space = infos["action_space"]
         # Sample new weights for the state dependent exploration
         if self.use_sde:
@@ -166,7 +167,7 @@ class OnPolicyAlgorithm(BaseAlgorithm):
 
         print("Start rollout data")
 
-        while n_steps < n_rollout_steps:
+        while n_steps < n_rollout_steps:# or (n_steps >= n_rollout_steps and not dones):
             if self.use_sde and self.sde_sample_freq > 0 and n_steps % self.sde_sample_freq == 0:
                 # Sample a new noise matrix
                 self.policy.reset_noise(env.num_envs)
@@ -177,6 +178,7 @@ class OnPolicyAlgorithm(BaseAlgorithm):
                 action_space = obs_as_tensor(action_space, self.device)
                 actions, values, log_probs = self.policy(obs_tensor, action_space)
             actions = actions.cpu().numpy()
+            print(values)
 
             # Rescale and perform action
             clipped_actions = actions[0]
