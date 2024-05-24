@@ -165,7 +165,7 @@ class Match3Env(gym.Env):
         }
 
     def reset(self, *args, **kwargs):
-        board, list_monsters = self.levels.sample()
+        board, list_monsters = self.levels.next()
         self.__game.start(board, list_monsters)
         obs = self.helper._format_observation(self.__get_board(), list_monsters, "cpu")
         return self.helper.obs_to_tensor(obs["obs"]), {

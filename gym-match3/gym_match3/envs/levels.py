@@ -11,6 +11,7 @@ Level = namedtuple("Level", ["h", "w", "n_shapes", "board", "list_monsters"])
 class Match3Levels:
 
     def __init__(self, levels, immovable_shape=-1, h=None, w=None, n_shapes=None):
+        self.__current_lv_idx = 0
         self.__levels = levels
         self.__immovable_shape = immovable_shape
         self.__h = self.__set_dim(h, [lvl.h for lvl in levels])
@@ -39,6 +40,15 @@ class Match3Levels:
         """
         level_template = random.sample(self.levels, 1)[0]
         board = self.create_board(level_template)
+        return board, level_template.list_monsters
+    
+    def next(self):
+        """
+        :return: board for random level
+        """
+        level_template = self.levels[self.__current_lv_idx]
+        board = self.create_board(level_template)
+        self.__current_lv_idx = (self.__current_lv_idx + 1) % len(self.levels)
         return board, level_template.list_monsters
 
     @staticmethod

@@ -317,7 +317,7 @@ class RolloutBuffer(BaseBuffer):
                 "log_probs",
                 "advantages",
                 "returns",
-
+                "rewards",
                 "legal_actions"
             ]
 
@@ -346,7 +346,7 @@ class RolloutBuffer(BaseBuffer):
             self.log_probs[batch_inds].flatten(),
             self.advantages[batch_inds].flatten(),
             self.returns[batch_inds].flatten(),
-
+            self.rewards[batch_inds].flatten(),
             self.legal_actions[batch_inds]
         )
         return RolloutBufferSamples(*tuple(map(self.to_torch, data)))

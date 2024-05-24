@@ -178,17 +178,18 @@ class PPO(OnPolicyAlgorithm):
             self._setup_model()
             self.set_logger(logger)
 
+        self._model_name = f"ppo_m3_with_cnn_ELU_{learning_rate}_{n_steps}_{'' if policy_kwargs['share_features_extractor'] else 'not_'}share_{datetime.datetime.today().strftime('%Y%m%d')}"
         self._wandb = _wandb
         if self._wandb:
             wandb.init(project="m3_with_cnn", 
-                       name=f"ppo_m3_with_cnn_{learning_rate}_{n_steps}_{'' if policy_kwargs['share_features_extractor'] else 'not_'}share_{datetime.datetime.today().strftime('%Y%m%d')}")
+                       name=self._model_name)
 
     def _setup_model(self) -> None:
         super()._setup_model()
 
         self.lr_scheduler = th.optim.lr_scheduler.CosineAnnealingLR(
             self.policy.optimizer,
-            T_max=1000,
+            T_max=500,
             eta_min = 1e-7, # Minimum learning rate
             last_epoch = -1,
             verbose=True
@@ -221,7 +222,7 @@ class PPO(OnPolicyAlgorithm):
 
         entropy_losses = []
         pg_losses, value_losses = [], []
-        mean_values, mean_returns, mean_advantage = [], [], []
+        mean_rewards, mean_values, mean_returns, mean_advantage = [], [], [], []
         clip_fractions = []
 
         continue_training = True
@@ -231,6 +232,7 @@ class PPO(OnPolicyAlgorithm):
             # Do a complete pass on the rollout buffer
             for rollout_data in self.rollout_buffer.get(self.batch_size):
                 if epoch == 0:
+                    mean_rewards.extend(rollout_data.rewards.cpu().flatten().tolist())
                     mean_values.extend(rollout_data.old_values.cpu().flatten().tolist())
                     mean_returns.extend(rollout_data.returns.cpu().flatten().tolist())
                     mean_advantage.extend(rollout_data.advantages.cpu().flatten().tolist())
@@ -352,6 +354,7 @@ class PPO(OnPolicyAlgorithm):
             "Reward/advantages":np.mean(mean_advantage),
             "Reward/returns":np.mean(mean_returns),
             "Reward/values":np.mean(mean_values),
+            "Reward/rewards":np.mean(mean_rewards)
         }
         # if hasattr(self._policy, "log_std"):
         #     stats["train/std"]=th.exp(self._policy.log_std).mean().item(),
@@ -360,9 +363,7 @@ class PPO(OnPolicyAlgorithm):
             stats["train/clip_range_vf"]=clip_range_vf
 
         self.train_log(stats)
-
-        if self._n_updates % 5:
-            self.policy.save(path=".\\bot\logic\m3cnn\model\_saved_model\model.pt")
+        self.policy.save(path=f".\_saved_model\{self._model_name}.pt")
 
     def learn(
         self: SelfPPO,

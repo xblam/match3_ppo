@@ -31,7 +31,7 @@ class RolloutBufferSamples(NamedTuple):
     old_log_prob: torch.Tensor
     advantages: torch.Tensor
     returns: torch.Tensor
-
+    rewards: torch.Tensor
     legal_actions: torch.Tensor
 
 
