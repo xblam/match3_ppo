@@ -746,7 +746,6 @@ class Filler(AbstractFiller):
 
     @staticmethod
     def _move_line(line, immovable_shape):
-        new_line = np.zeros_like(line)
         num_of_nans = np.isnan(line).sum()
         immov_mask = mask_immov_mask(line, immovable_shape)
         nans_mask = np.isnan(line)
@@ -755,8 +754,7 @@ class Filler(AbstractFiller):
 
         num_putted = 0
         for ind, shape in enumerate(new_line):
-
-            if shape != immovable_shape and shape not in GameObject.monsters and num_putted < num_of_nans:
+            if shape != immovable_shape and shape not in np.concatenate([GameObject.monsters, GameObject.blockers]) and num_putted < num_of_nans:
                 new_line[ind] = np.nan
                 num_putted += 1
                 if num_putted == num_of_nans:
@@ -815,7 +813,9 @@ class AbstractMonster(ABC):
         self._progress += 1
 
     # @abstractmethod
-    def attacked(self, damage):
+    def attacked(self, match_damage, pu_damage):
+        damage = match_damage + pu_damage
+
         assert self._hp > 0, f"self._hp need to be positive, but self._hp = {self._hp}"
         self._hp -= damage
 
@@ -851,10 +851,13 @@ class AbstractMonster(ABC):
         return self._hp
     
     def get_dame(self, matches, brokens):
+        """
+        return: match_damage, pu_damage
+        """
         # print("Im mons, get dame from brokens", brokens)
         __matches = [ele.point for ele in matches]
         # print(set(self.dmg_mask) & set(__matches))
-        return len(set(self.dmg_mask) & set(__matches)) + len(set(self.inside_dmg_mask) & set(brokens))
+        return len(set(self.dmg_mask) & set(__matches)), len(set(self.inside_dmg_mask) & set(brokens))
 
 class DameMonster(AbstractMonster):
     def __init__(self, position: Point, relax_interval=6, setup_interval=3, hp=20, width: int = 1, height: int = 1, dame=4, cancel_dame=5):
@@ -886,24 +889,25 @@ class DameMonster(AbstractMonster):
             "damage": 0
         }
 
-    def attacked(self, damage):
+    def attacked(self, match_damage, pu_damage):
+        damage = match_damage + pu_damage
+
         if self._setup_interval < self._progress and \
             self._progress <= self._relax_interval:
             self._cancel -= damage
         else:
-            super().attacked(damage)
+            super().attacked(match_damage, pu_damage)
 
 
 class BoxMonster(AbstractMonster):
-    def __init__(self, box_mons_type:int, relax_interval, setup_interval, position: Point, hp=30, width: int = 1, height: int = 1):
-        super().__init__(relax_interval, setup_interval, position, hp, width, height)
-        super().__init__(relax_interval, 0, hp)
+    def __init__(self, box_mons_type:int, position: Point, relax_interval: int=6, setup_interval: int=0, hp=30, width: int = 1, height: int = 1):
+        super().__init__(relax_interval, 0, position, hp, width, height)
         self.__box_monster_type = box_mons_type
 
     def act(self):
         super().act()
-        if self.__progress > self._relax_interval + self._setup_interval:
-            self.__progress = 0
+        if self._progress > self._relax_interval + self._setup_interval:
+            self._progress = 0
             if self.__box_monster_type == GameObject.monster_box_box:
                 return {
                     "box": GameObject.blocker_box
@@ -920,16 +924,76 @@ class BoxMonster(AbstractMonster):
                 return {
                     "box": GameObject.blocker_bomb if np.random.uniform(0, 1.0) <= 0.5 else GameObject.blocker_thorny
                 }
+        return {
             
+        }
+
 
 class BombBlocker(DameMonster):
-    def __init__(self, relax_interval=3, setup_interval=0, hp=5, dame=2, cancel_dame=5):
-        super().__init__(relax_interval, setup_interval, hp, dame, cancel_dame)
+    def __init__(self, position: Point, relax_interval=3, setup_interval=0, hp=2, width: int = 1, height: int = 1, dame=2, cancel_dame=5):
+        super().__init__(position, relax_interval, setup_interval, hp, width, height, dame, cancel_dame)
+
+        self.is_box = True if dame == 0 else False
+
+    def act(self):
+        if self._progress > self._relax_interval + self._setup_interval:
+            self._progress = 0
+            self._hp = -999
+            return {
+                "damage": self._damage
+            }
+        
+        return {
+            "damage": 0
+        }
+
+    def attacked(self, match_damage, pu_damage):
+        return super().attacked(match_damage, pu_damage)
 
 
 class ThornyBlocker(DameMonster):
-    def __init__(self, relax_interval=8, setup_interval=3, hp=30, dame=3, cancel_dame=5):
-        super().__init__(relax_interval, setup_interval, hp, dame, cancel_dame)
+    def __init__(self, position: Point, relax_interval=999, setup_interval=999, hp=1, width: int = 1, height: int = 1, dame=1, cancel_dame=5):
+        super().__init__(position, relax_interval, setup_interval, hp, width, height, dame, cancel_dame)
+
+    def act(self):
+        if self._progress > self._relax_interval + self._setup_interval:
+            self._progress = 0
+            self._hp = -999
+            return {
+                "damage": self._damage
+            }
+        
+        return {
+            "damage": 0
+        }
+
+    def attacked(self, match_damage, pu_damage):
+        if pu_damage > 0:
+            self._hp = -999
+        elif match_damage > 0:
+            self._progress = self._relax_interval + self._setup_interval + 1
+
+
+class BlockerFactory:
+    def __init__(self):
+        pass
+
+    @staticmethod
+    def create_blocker(blocker_type: int, position: Point, width: int = 1, height: int = 1):
+        if blocker_type == GameObject.blocker_box:
+            return BombBlocker(position, 
+                               relax_interval=999,
+                               dame=0,
+                               width=width,
+                               height=height)
+        elif blocker_type == GameObject.blocker_bomb:
+            return BombBlocker(position,
+                               width=width,
+                               height=height)
+        elif blocker_type == GameObject.blocker_thorny:
+            return ThornyBlocker(position,
+                                 width=width,
+                                 height=height)
 
 
 class AbstractGame(ABC):
@@ -1018,26 +1082,41 @@ class Game(AbstractGame):
         matches, new_power_ups, brokens = self.__check_matches(
             point, direction)
         
+        score += len(brokens)
+        
         for i in range(len(self.list_monsters)):
-            dmg += self.list_monsters[i].get_dame(matches, brokens)
-            self.list_monsters[i].attacked(dmg)
+            match_damage, pu_damage = self.list_monsters[i].get_dame(matches, brokens)
+            dmg += match_damage + pu_damage
+            score -= pu_damage
+
+            self.list_monsters[i].attacked(match_damage, pu_damage)
             monster_result = self.list_monsters[i].act()
-            self_dmg += monster_result["damage"]
-            cancel_score += monster_result.get("cancel_score", 0)
+            if "box" in monster_result.keys():
+                coor_x, coor_y = np.random.randint(0, [*self.board.board_size])
+                while(self.board.get_shape(Point(coor_x, coor_y)) in np.concatenate([GameObject.monsters, GameObject.blockers]) + [GameObject.immovable_shape]):
+                    coor_x, coor_y = np.random.randint(0, [*self.board.board_size])
+
+                mons_pos = Point(coor_x, coor_y)
+                self.board.put_shape(mons_pos, monster_result["box"])
+                self.list_monsters.append(BlockerFactory.create_blocker(monster_result["box"], mons_pos))
+            if "damage" in monster_result.keys():    
+                self_dmg += monster_result["damage"]
+                cancel_score += monster_result.get("cancel_score", 0)
 
         self.__player_hp -= self_dmg
-
-        if len(matches) > 0:
+        if len(matches) > 0 or len(brokens):
             score += len(matches)
             self.board.move(point, direction)
-            self.board.delete(matches)
+            if len(matches) > 0:
+                self.board.delete(matches)
+            if len(brokens) > 0:
+                self.board.delete(brokens)
             ### Handle add power up
             for _point, _shape in new_power_ups.items():
                 self.board.put_shape(_point, _shape)
             ###
             self.__filler.move_and_fill(self.board)
             self.__operate_until_possible_moves()
-
         
         # print("refill", time.time() - s_t)
         if dmg > 0:

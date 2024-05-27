@@ -20,7 +20,7 @@ class GameObject:
     blocker_box = 11
     blocker_thorny = 12
     blocker_bomb = 13
-    blockers = np.arange(power_missile_h, power_disco + 1, 1)
+    blockers = np.arange(blocker_box, blocker_bomb + 1, 1)
     # Monster
     monster_dame = 14
     monster_box_box = 15
@@ -29,10 +29,13 @@ class GameObject:
     monster_box_both = 18
     monsters = np.arange(monster_dame, monster_box_both + 1, 1)
 
-def mask_immov_mask(line, immovable_shape):
+def mask_immov_mask(line, immovable_shape, can_move_blocker = False):
     immov_mask = (line == immovable_shape)
     for _immov_obj in GameObject.monsters:
         immov_mask |= (line == _immov_obj)
+    if not can_move_blocker:
+        for _immov_obj in GameObject.blockers:
+            immov_mask |= (line == _immov_obj)
 
     return immov_mask
 
