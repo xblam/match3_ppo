@@ -18,16 +18,21 @@ Thanks for [kamildar/gym-match3](https://github.com/kamildar/gym-match3) publish
         ```bash
         conda create -n m3_simu python=3.9
         conda activate m3_simu
+        conda install pytorch pytorch-cuda=11.8 -c pytorch -c nvidia
         cd gym-match3
         pip install -e .
+        pip install -r requirements.txt
+
         ```
 
     - Using venv:
         ```bash
         python -m venv ./venv
         path/to/venv/Scripts/activate
+        pip3 install torch --index-url https://download.pytorch.org/whl/cu118
         cd gym-match3
         pip install -e .
+        pip install -r requirements.txt
         ```
 
 ## M3 Simulator Usage

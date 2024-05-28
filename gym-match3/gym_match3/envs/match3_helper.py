@@ -3,7 +3,7 @@ import torch
 import numpy as np
 
 from gym_match3.envs.constants import GameObject
-from gym_match3.envs.game import AbstractMonster
+from gym_match3.envs.game import AbstractMonster, ThornyBlocker
 
 
 class M3Helper():
@@ -405,6 +405,9 @@ class M3Helper():
             #         | (board == GameObject.power_disco),
             "blocker": (board == GameObject.blocker_box),
             "monster": (board == GameObject.monster_dame) \
+                        | (board == GameObject.monster_box_box) \
+                        | (board == GameObject.monster_box_bomb) \
+                        | (board == GameObject.monster_box_thorny) \
                         | (board == GameObject.monster_box_both) \
                         | (board == GameObject.blocker_thorny) \
                         | (board == GameObject.blocker_bomb),
@@ -424,13 +427,27 @@ class M3Helper():
         }
 
         for _mons in list_monsters:
-            for p in _mons.dmg_mask:
-                obs["monster_dmg_mask"][p.get_coord()] = 1
-            for p in _mons.inside_dmg_mask:
-                obs["monster_dmg_mask"][p.get_coord()] = 1
+            if isinstance(_mons, ThornyBlocker):
+                for p in _mons.inside_dmg_mask:
+                    try:
+                        obs["self_dmg_mask"][p.get_coord()] = 1
+                    except IndexError:
+                        continue
+            else:
+                for p in _mons.inside_dmg_mask:
+                    try:
+                        obs["monster_dmg_mask"][p.get_coord()] = 1
+                    except IndexError:
+                        continue
 
-            for p in _mons.cause_dmg_mask:
-                obs["self_dmg_mask"][p.get_coord()] = 1
+                    
+            for p in _mons.dmg_mask:
+                try:
+                    obs["monster_dmg_mask"][p.get_coord()] = 1
+                except IndexError:
+                    continue
+
+            
 
         for r in range(self.num_row):
             for c in range(self.num_col):

@@ -178,7 +178,7 @@ class PPO(OnPolicyAlgorithm):
             self._setup_model()
             self.set_logger(logger)
 
-        self._model_name = f"ppo_m3_with_cnn_ELU_{learning_rate}_{n_steps}_{'' if policy_kwargs['share_features_extractor'] else 'not_'}share_{datetime.datetime.today().strftime('%Y%m%d')}"
+        self._model_name = f"ppo_m3_with_cnn_add_box_{learning_rate}_{n_steps}_{'' if policy_kwargs['share_features_extractor'] else 'not_'}share_{datetime.datetime.today().strftime('%Y%m%d')}"
         self._wandb = _wandb
         if self._wandb:
             wandb.init(project="m3_with_cnn", 

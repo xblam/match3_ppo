@@ -298,9 +298,12 @@ class Board(AbstractBoard):
             if shape == self.immovable_shape:
                 raise ImmovableShapeError
 
-    def delete(self, points: set):
+    def delete(self, points: set, allow_delete_monsters: bool = False):
         self._check_availability(*points)
-        coordinates = tuple(np.array([i.get_coord() for i in points if self.get_shape(i) not in GameObject.monsters]).T.tolist())
+        if allow_delete_monsters:
+            coordinates = tuple(np.array([i.get_coord() for i in points]).T.tolist())
+        else:
+            coordinates = tuple(np.array([i.get_coord() for i in points if self.get_shape(i) not in np.concatenate([GameObject.monsters, GameObject.blockers])]).T.tolist())
         self.__board[coordinates] = np.nan
         return self
 
@@ -570,7 +573,12 @@ class PowerUpActivator(AbstractPowerUpActivator):
 
         if shape1 in GameObject.powers and shape2 in GameObject.powers:
             # Merge power_up
-            pass
+            if shape1 > shape2:
+                shape1, shape2 = shape2, shape1
+
+            # #type1
+            # if shape1 == GameObject.power_disco
+            
         elif shape1 in GameObject.powers:
             return_brokens.add(point)
             if shape1 == GameObject.power_disco:
@@ -789,6 +797,7 @@ class PowerUpFactory(AbstractPowerUpFactory, AbstractSearcher):
 
 class AbstractMonster(ABC):
     def __init__(self, relax_interval, setup_interval = 0, position:Point = None, hp = 30, width:int = 1, height:int = 1):
+        self.real_monster = False
         self._hp = hp
         self._progress = 0
         self._relax_interval = relax_interval
@@ -862,6 +871,7 @@ class AbstractMonster(ABC):
 class DameMonster(AbstractMonster):
     def __init__(self, position: Point, relax_interval=6, setup_interval=3, hp=20, width: int = 1, height: int = 1, dame=4, cancel_dame=5):
         super().__init__(relax_interval, setup_interval, position, hp, width, height)
+        self.real_monster = True
     
         self._damage = dame
 
@@ -900,8 +910,9 @@ class DameMonster(AbstractMonster):
 
 
 class BoxMonster(AbstractMonster):
-    def __init__(self, box_mons_type:int, position: Point, relax_interval: int=6, setup_interval: int=0, hp=30, width: int = 1, height: int = 1):
+    def __init__(self, box_mons_type:int, position: Point, relax_interval: int=8, setup_interval: int=0, hp=30, width: int = 1, height: int = 1):
         super().__init__(relax_interval, 0, position, hp, width, height)
+        self.real_monster = True
         self.__box_monster_type = box_mons_type
 
     def act(self):
@@ -1093,7 +1104,7 @@ class Game(AbstractGame):
             monster_result = self.list_monsters[i].act()
             if "box" in monster_result.keys():
                 coor_x, coor_y = np.random.randint(0, [*self.board.board_size])
-                while(self.board.get_shape(Point(coor_x, coor_y)) in np.concatenate([GameObject.monsters, GameObject.blockers]) + [GameObject.immovable_shape]):
+                while(self.board.get_shape(Point(coor_x, coor_y)) in np.concatenate([GameObject.monsters, GameObject.blockers, [GameObject.immovable_shape]])):
                     coor_x, coor_y = np.random.randint(0, [*self.board.board_size])
 
                 mons_pos = Point(coor_x, coor_y)
@@ -1104,7 +1115,7 @@ class Game(AbstractGame):
                 cancel_score += monster_result.get("cancel_score", 0)
 
         self.__player_hp -= self_dmg
-        if len(matches) > 0 or len(brokens):
+        if len(matches) > 0 or len(brokens) > 0:
             score += len(matches)
             self.board.move(point, direction)
             if len(matches) > 0:
@@ -1143,24 +1154,27 @@ class Game(AbstractGame):
     
     def _sweep_died_monster(self):
         mons_points = set()
-        alive_flag = False
-        died_flag = False
-        for i in range(len(self.list_monsters)):
+        real_mons_alive, alive_flag, died_flag = False, False, False
+        i = 0
+
+        while i < len(self.list_monsters):
             if self.list_monsters[i].get_hp() > 0:
+                if self.list_monsters[i].real_monster:
+                    real_mons_alive = True
                 alive_flag = True
+                i += 1
             else:
                 died_flag = True
                 mons_points.update(self.list_monsters[i].inside_dmg_mask)
                 del self.list_monsters[i]
 
-        if alive_flag:
+        if alive_flag and real_mons_alive:
             if died_flag:
-                self.board.delete(set(mons_points))
+                self.board.delete(set(mons_points), allow_delete_monsters=True)
                 
                 self.__filler.move_and_fill(self.board)
                 self.__operate_until_possible_moves()
         else:
-            self.board.delete(set(mons_points))
             return True
         return False
 
@@ -1209,7 +1223,7 @@ class Game(AbstractGame):
         possible_moves = self.__get_possible_moves()
         # print("find possible moves", time.time() - s_t)
         while len(possible_moves) == 0:
-            print("not hvae move")
+            print("not have move")
             self.board.shuffle(self.__random_state)
             self.__scan_del_mvnans_fill_until()
             possible_moves = self.__get_possible_moves()
