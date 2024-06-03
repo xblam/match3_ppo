@@ -43,7 +43,7 @@ class M3CnnFeatureExtractor(nn.Module):
 
         # self.linear = nn.Sequential(nn.Linear(self.features_dim, self.features_dim), nn.ReLU())
 
-        self.sm = nn.ELU()
+        self.sm = nn.Softmax(dim=1)
 
     def forward(self, input: torch.Tensor):
         if len(input.shape) == 3:

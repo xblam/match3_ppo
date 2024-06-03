@@ -572,12 +572,54 @@ class PowerUpActivator(AbstractPowerUpActivator):
         shape2 = board.get_shape(point2)
 
         if shape1 in GameObject.powers and shape2 in GameObject.powers:
-            # Merge power_up
-            if shape1 > shape2:
-                shape1, shape2 = shape2, shape1
+            # # Merge power_up
+            # pass
+            # if shape1 > shape2:
+            #     shape1, shape2 = shape2, shape1
 
-            # #type1
-            # if shape1 == GameObject.power_disco
+            # # With disco
+            # if shape2 == GameObject.power_disco:
+            #     if shape1 != GameObject.power_disco:
+            #         chosen_color = np.random.randint(1, board.n_shapes + 1)
+            #         for i in range(board.board_size[0]):
+            #             for j in range(board.board_size[1]):
+            #                 _p = Point(i, j)
+            #                 if board.get_shape(_p) == chosen_color:
+            #                     return_brokens.add(point)
+            #                     disco_brokens.add(_p)
+            #                     brokens.extend(self.__activate_not_merge(shape1, _p, board, None))
+            #     else:
+            #         brokens = [Point(i, j) for i, j in product(range(board.board_size[0]), range(board.board_size[1]))]
+            #         return set(brokens), 
+
+            # # With plane
+            # elif shape1 == GameObject.power_missile_h and shape2 == GameObject.power_plane:
+            #     pass
+            # elif shape1 == GameObject.power_missile_v and shape2 == GameObject.power_plane:
+            #     pass
+            # elif shape1 == GameObject.power_bomb and shape2 == GameObject.power_plane:
+            #     pass
+            # elif shape1 == GameObject.power_plane and shape2 == GameObject.power_plane:
+            #     pass
+
+            # # With bomb
+            # elif shape1 == GameObject.power_missile_h and shape2 == GameObject.power_bomb:
+            #     pass
+            # elif shape1 == GameObject.power_missile_v and shape2 == GameObject.power_bomb:
+            #     pass
+            # elif shape1 == GameObject.power_bomb and shape2 == GameObject.power_bomb:
+            #     pass
+
+            # # With missile_v
+            # elif shape1 == GameObject.power_missile_h and shape2 == GameObject.power_missile_v:
+            #     pass
+            # elif shape1 == GameObject.power_missile_v and shape2 == GameObject.power_missile_v:
+            #     pass
+
+            # # With missile_h
+            # elif shape1 == GameObject.power_missile_h and shape2 == GameObject.power_missile_h:
+            #     pass
+            pass
             
         elif shape1 in GameObject.powers:
             return_brokens.add(point)
@@ -612,9 +654,11 @@ class PowerUpActivator(AbstractPowerUpActivator):
             except OutOfBoardError:
                 continue
         
-        if shape1 == GameObject.power_disco or shape2 == GameObject.power_disco:
-            return return_brokens, disco_brokens
         return return_brokens, disco_brokens
+    
+    def __activate_merge(self, shape1: int, shape2: int, ):
+        pass
+
     
     def __activate_not_merge(self, power_up_type: int, point: Point, board: Board, _color: int = None):
         brokens = []
@@ -797,7 +841,7 @@ class PowerUpFactory(AbstractPowerUpFactory, AbstractSearcher):
 
 class AbstractMonster(ABC):
     def __init__(self, relax_interval, setup_interval = 0, position:Point = None, hp = 30, width:int = 1, height:int = 1):
-        self.real_monster = False
+        self.real_monster = True
         self._hp = hp
         self._progress = 0
         self._relax_interval = relax_interval
@@ -871,7 +915,6 @@ class AbstractMonster(ABC):
 class DameMonster(AbstractMonster):
     def __init__(self, position: Point, relax_interval=6, setup_interval=3, hp=20, width: int = 1, height: int = 1, dame=4, cancel_dame=5):
         super().__init__(relax_interval, setup_interval, position, hp, width, height)
-        self.real_monster = True
     
         self._damage = dame
 
@@ -912,7 +955,6 @@ class DameMonster(AbstractMonster):
 class BoxMonster(AbstractMonster):
     def __init__(self, box_mons_type:int, position: Point, relax_interval: int=8, setup_interval: int=0, hp=30, width: int = 1, height: int = 1):
         super().__init__(relax_interval, 0, position, hp, width, height)
-        self.real_monster = True
         self.__box_monster_type = box_mons_type
 
     def act(self):
@@ -945,6 +987,7 @@ class BombBlocker(DameMonster):
         super().__init__(position, relax_interval, setup_interval, hp, width, height, dame, cancel_dame)
 
         self.is_box = True if dame == 0 else False
+        self.real_monster = False
 
     def act(self):
         if self._progress > self._relax_interval + self._setup_interval:
@@ -965,6 +1008,8 @@ class BombBlocker(DameMonster):
 class ThornyBlocker(DameMonster):
     def __init__(self, position: Point, relax_interval=999, setup_interval=999, hp=1, width: int = 1, height: int = 1, dame=1, cancel_dame=5):
         super().__init__(position, relax_interval, setup_interval, hp, width, height, dame, cancel_dame)
+
+        self.real_monster = False
 
     def act(self):
         if self._progress > self._relax_interval + self._setup_interval:
@@ -1157,6 +1202,10 @@ class Game(AbstractGame):
         real_mons_alive, alive_flag, died_flag = False, False, False
         i = 0
 
+        # print(self.board)
+        # print("HP", [x.get_hp() for x in self.list_monsters])
+        # print("real", [x.real_monster for x in self.list_monsters])
+
         while i < len(self.list_monsters):
             if self.list_monsters[i].get_hp() > 0:
                 if self.list_monsters[i].real_monster:
@@ -1168,6 +1217,7 @@ class Game(AbstractGame):
                 mons_points.update(self.list_monsters[i].inside_dmg_mask)
                 del self.list_monsters[i]
 
+        # print("3 bools", alive_flag, real_mons_alive, died_flag)
         if alive_flag and real_mons_alive:
             if died_flag:
                 self.board.delete(set(mons_points), allow_delete_monsters=True)

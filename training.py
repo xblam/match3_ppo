@@ -18,6 +18,10 @@ def get_args():
     parser.add_argument('--batch_size', default=128, type=int)
     parser.add_argument('--epochs', default=20, type=int)
 
+    # Continue training
+    parser.add_argument('--checkpoint', default=None, type=str,
+                        help="Path to current checkpoint to continue training")
+
     #Logging
     parser.add_argument('--wandb', action='store_true', default=False,
                         help="Whether want to logging onto Wandb")
@@ -46,6 +50,7 @@ PPO_trainer = PPO(
         "optimizer_class": torch.optim.Adam,
         "share_features_extractor": True
     },
+    _checkpoint=args.checkpoint,
     _wandb=args.wandb,
     device="cuda"
 )

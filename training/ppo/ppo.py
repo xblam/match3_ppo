@@ -109,6 +109,7 @@ class PPO(OnPolicyAlgorithm):
         policy_kwargs: Optional[Dict[str, Any]] = None,
         verbose: int = 0,
         seed: Optional[int] = None,
+        _checkpoint:str = None,
         _wandb: bool = False,
         device: Union[th.device, str] = "auto",
         _init_setup_model: bool = True,
@@ -178,11 +179,17 @@ class PPO(OnPolicyAlgorithm):
             self._setup_model()
             self.set_logger(logger)
 
-        self._model_name = f"ppo_m3_with_cnn_add_box_{learning_rate}_{n_steps}_{'' if policy_kwargs['share_features_extractor'] else 'not_'}share_{datetime.datetime.today().strftime('%Y%m%d')}"
+        self._checkpoint = _checkpoint
+        if self._checkpoint is not None:
+            print(f"Load checkpoint from {self._checkpoint}")
+            self.policy = self.policy.load(path=self._checkpoint, device=self.device)
+
+        self._model_name = f"ppo_m3_with_cnn_allReLU_{learning_rate}_{n_steps}_{'' if policy_kwargs['share_features_extractor'] else 'not_'}share_{datetime.datetime.today().strftime('%Y%m%d')}"
         self._wandb = _wandb
         if self._wandb:
             wandb.init(project="m3_with_cnn", 
                        name=self._model_name)
+        
 
     def _setup_model(self) -> None:
         super()._setup_model()
