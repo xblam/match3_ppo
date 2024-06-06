@@ -1,1 +1,1 @@
-python training.py --n_steps 4096 --lr 3e-5 --checkpoint _saved_model\ppo_m3_with_cnn_add_box_3e-05_4096_share_20240529.pt --wandb
+python training.py --prefix_name ppo_m3_with_cnn_deeper_8_layers --n_steps 4096 --lr 3e-5 --wandb 

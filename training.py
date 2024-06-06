@@ -8,6 +8,9 @@ from training.m3_model.m3_cnn import M3CnnFeatureExtractor
 
 def get_args():
     parser = argparse.ArgumentParser('BEiT fine-tuning and evaluation script for image classification', add_help=False)
+    # Model Information
+    parser.add_argument("--prefix_name", type=str, default="m3_with_cnn",
+                        help='prefix name of the model')
     # Rollout Data
     parser.add_argument('--n_steps', type=int, default=32, metavar='n_steps',
                         help='rollout data length (default: 32)')
@@ -45,14 +48,15 @@ PPO_trainer = PPO(
         "features_extractor_kwargs": {
             "mid_channels": 64,
             "out_channels": 161,
-            "num_first_cnn_layer": 4
+            "num_first_cnn_layer": 8
         },
         "optimizer_class": torch.optim.Adam,
         "share_features_extractor": True
     },
     _checkpoint=args.checkpoint,
     _wandb=args.wandb,
-    device="cuda"
+    device="cuda",
+    prefix_name=args.prefix_name
 )
 
 while True:

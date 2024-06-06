@@ -840,7 +840,7 @@ class PowerUpFactory(AbstractPowerUpFactory, AbstractSearcher):
 
 
 class AbstractMonster(ABC):
-    def __init__(self, relax_interval, setup_interval = 0, position:Point = None, hp = 30, width:int = 1, height:int = 1):
+    def __init__(self, relax_interval, setup_interval = 0, position:Point = None, hp = 30, width:int = 1, height:int = 1, have_paper_box:bool = False):
         self.real_monster = True
         self._hp = hp
         self._progress = 0
@@ -848,18 +848,29 @@ class AbstractMonster(ABC):
         self._setup_interval = setup_interval
         self._position = position
         self._width, self._height = width, height
+        self.have_paper_box = have_paper_box
 
         self.__left_dmg_mask = self.__get_left_mask(self._position, self._height)
         self.__right_dmg_mask = self.__get_right_mask(self._position + Point(0, self._width - 1), self._height)
         self.__top_dmg_mask = self.__get_top_mask(self._position, self._width)
         self.__down_dmg_mask = self.__get_down_mask(self._position + Point(self._height - 1, 0), self._width)
 
-        self.inside_dmg_mask = [Point(i, j) + position for i, j in product(range(self._height), range(self._width))]
+        self.__inside_dmg_mask = [Point(i, j) + position for i, j in product(range(self._height), range(self._width))]
         self.cause_dmg_mask = []
+
+        self.available_mask = [1, 1, 1, 1, 1] # left, right, top, down, inside
+
 
     @property
     def dmg_mask(self):
-        return self.__left_dmg_mask + self.__right_dmg_mask + self.__top_dmg_mask + self.__down_dmg_mask
+        return self.__left_dmg_mask if self.available_mask[0] else [] \
+            + self.__right_dmg_mask if self.available_mask[1] else [] \
+                + self.__top_dmg_mask if self.available_mask[2] else [] \
+                    + self.__down_dmg_mask if self.available_mask[3] else []
+    
+    @property
+    def inside_dmg_mask(self):
+        return self.__inside_dmg_mask if self.available_mask[4] else []
 
     @abstractmethod
     def act(self):
