@@ -1,1 +1,1 @@
-python training.py --prefix_name ppo_m3_with_cnn_deeper_8_layers --n_steps 4096 --lr 3e-5 --wandb 
+python training.py --prefix_name ppo_m3_with_cnn_deeper_8_layers --n_steps 4096 --lr 3e-5 --wandb

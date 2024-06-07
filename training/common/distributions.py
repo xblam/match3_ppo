@@ -13,8 +13,12 @@ import torchrl
 from training.common.preprocessing import get_action_dim
 
 SelfDistribution = TypeVar("SelfDistribution", bound="Distribution")
-SelfCategoricalDistribution = TypeVar("SelfCategoricalDistribution", bound="CategoricalDistribution")
-SelfMaskedCategoricalDistribution = TypeVar("SelfMaskedCategoricalDistribution", bound="MaskedCategoricalDistribution")
+SelfCategoricalDistribution = TypeVar(
+    "SelfCategoricalDistribution", bound="CategoricalDistribution"
+)
+SelfMaskedCategoricalDistribution = TypeVar(
+    "SelfMaskedCategoricalDistribution", bound="MaskedCategoricalDistribution"
+)
 
 
 class Distribution(ABC):
@@ -25,7 +29,9 @@ class Distribution(ABC):
         self.distribution = None
 
     @abstractmethod
-    def proba_distribution_net(self, *args, **kwargs) -> Union[nn.Module, Tuple[nn.Module, nn.Parameter]]:
+    def proba_distribution_net(
+        self, *args, **kwargs
+    ) -> Union[nn.Module, Tuple[nn.Module, nn.Parameter]]:
         """Create the layers and parameters that represent the distribution.
 
         Subclasses must define this, but the arguments and return type vary between
@@ -93,7 +99,9 @@ class Distribution(ABC):
         """
 
     @abstractmethod
-    def log_prob_from_params(self, *args, **kwargs) -> Tuple[torch.Tensor, torch.Tensor]:
+    def log_prob_from_params(
+        self, *args, **kwargs
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
         """
         Returns samples and the associated log probabilities
         from the probability distribution given its parameters.
@@ -141,7 +149,9 @@ class CategoricalDistribution(Distribution):
         action_logits = nn.Linear(latent_dim, self.action_dim)
         return action_logits
 
-    def proba_distribution(self: SelfCategoricalDistribution, action_logits: torch.Tensor) -> SelfCategoricalDistribution:
+    def proba_distribution(
+        self: SelfCategoricalDistribution, action_logits: torch.Tensor
+    ) -> SelfCategoricalDistribution:
         self.distribution = Categorical(logits=action_logits)
         return self
 
@@ -157,12 +167,16 @@ class CategoricalDistribution(Distribution):
     def mode(self) -> torch.Tensor:
         return torch.argmax(self.distribution.probs, dim=1)
 
-    def actions_from_params(self, action_logits: torch.Tensor, deterministic: bool = False) -> torch.Tensor:
+    def actions_from_params(
+        self, action_logits: torch.Tensor, deterministic: bool = False
+    ) -> torch.Tensor:
         # Update the proba distribution
         self.proba_distribution(action_logits)
         return self.get_actions(deterministic=deterministic)
 
-    def log_prob_from_params(self, action_logits: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+    def log_prob_from_params(
+        self, action_logits: torch.Tensor
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
         actions = self.actions_from_params(action_logits)
         log_prob = self.log_prob(actions)
         return actions, log_prob
@@ -192,11 +206,14 @@ class MaskedCategoricalDistribution(Distribution):
         action_logits = nn.Linear(latent_dim, self.action_dim)
         return action_logits
 
-    def proba_distribution(self, action_logits: torch.Tensor, legal_action: torch.Tensor):
+    def proba_distribution(
+        self, action_logits: torch.Tensor, legal_action: torch.Tensor
+    ):
         # print("action_logits in proba", action_logits)
-        self.distribution = torchrl.modules.MaskedCategorical(logits=action_logits,
-                                                              mask=legal_action.to(torch.bool))
-        
+        self.distribution = torchrl.modules.MaskedCategorical(
+            logits=action_logits, mask=legal_action.to(torch.bool)
+        )
+
         # print(self.distribution.logits)
         # print(legal_action)
 
@@ -214,19 +231,26 @@ class MaskedCategoricalDistribution(Distribution):
     def mode(self) -> torch.Tensor:
         return torch.argmax(self.distribution.probs, dim=1)
 
-    def actions_from_params(self, action_logits: torch.Tensor, deterministic: bool = False) -> torch.Tensor:
+    def actions_from_params(
+        self, action_logits: torch.Tensor, deterministic: bool = False
+    ) -> torch.Tensor:
         # Update the proba distribution
         self.proba_distribution(action_logits)
         return self.get_actions(deterministic=deterministic)
 
-    def log_prob_from_params(self, action_logits: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+    def log_prob_from_params(
+        self, action_logits: torch.Tensor
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
         actions = self.actions_from_params(action_logits)
         log_prob = self.log_prob(actions)
         return actions, log_prob
 
 
 def make_proba_distribution(
-    action_space: spaces.Space, use_sde: bool = False, dist_kwargs: Optional[Dict[str, Any]] = None, have_illegal: bool = False
+    action_space: spaces.Space,
+    use_sde: bool = False,
+    dist_kwargs: Optional[Dict[str, Any]] = None,
+    have_illegal: bool = False,
 ) -> Distribution:
     """
     Return an instance of Distribution for the correct type of action space
@@ -261,7 +285,9 @@ def kl_divergence(dist_true: Distribution, dist_pred: Distribution) -> torch.Ten
     :return: KL(dist_true||dist_pred)
     """
     # KL Divergence for different distribution types is out of scope
-    assert dist_true.__class__ == dist_pred.__class__, "Error: input distributions should be the same type"
+    assert (
+        dist_true.__class__ == dist_pred.__class__
+    ), "Error: input distributions should be the same type"
 
     # MultiCategoricalDistribution is not a PyTorch Distribution subclass
     # so we need to implement it ourselves!
@@ -277,5 +303,7 @@ def kl_divergence(dist_true: Distribution, dist_pred: Distribution) -> torch.Ten
 
     # # Use the PyTorch kl_divergence implementation
     # else:
-        # return torch.distributions.kl_divergence(dist_true.distribution, dist_pred.distribution)
-    return torch.distributions.kl_divergence(dist_true.distribution, dist_pred.distribution)
+    # return torch.distributions.kl_divergence(dist_true.distribution, dist_pred.distribution)
+    return torch.distributions.kl_divergence(
+        dist_true.distribution, dist_pred.distribution
+    )

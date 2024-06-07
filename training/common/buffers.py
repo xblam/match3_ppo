@@ -102,7 +102,7 @@ class BaseBuffer(ABC):
         self.pos = 0
         self.full = False
 
-    def sample(self, batch_size: int, env = None):
+    def sample(self, batch_size: int, env=None):
         """
         :param batch_size: Number of element to sample
         :param env: associated gym VecEnv
@@ -115,7 +115,7 @@ class BaseBuffer(ABC):
 
     @abstractmethod
     def _get_samples(
-        self, batch_inds: np.ndarray, env = None
+        self, batch_inds: np.ndarray, env=None
     ) -> Union[ReplayBufferSamples, RolloutBufferSamples]:
         """
         :param batch_inds:
@@ -141,14 +141,14 @@ class BaseBuffer(ABC):
     @staticmethod
     def _normalize_obs(
         obs: Union[np.ndarray, Dict[str, np.ndarray]],
-        env = None,
+        env=None,
     ) -> Union[np.ndarray, Dict[str, np.ndarray]]:
         if env is not None:
             return env.normalize_obs(obs)
         return obs
 
     @staticmethod
-    def _normalize_reward(reward: np.ndarray, env = None) -> np.ndarray:
+    def _normalize_reward(reward: np.ndarray, env=None) -> np.ndarray:
         if env is not None:
             return env.normalize_reward(reward).astype(np.float32)
         return reward
@@ -196,27 +196,39 @@ class RolloutBuffer(BaseBuffer):
         gamma: float = 0.99,
         n_envs: int = 1,
     ):
-        super().__init__(buffer_size, observation_space, action_space, device, n_envs=n_envs)
+        super().__init__(
+            buffer_size, observation_space, action_space, device, n_envs=n_envs
+        )
         self.gae_lambda = gae_lambda
         self.gamma = gamma
         self.generator_ready = False
         self.reset()
 
     def reset(self) -> None:
-        self.observations = np.zeros((self.buffer_size, self.n_envs, *self.obs_shape), dtype=np.float32)
-        self.actions = np.zeros((self.buffer_size, self.n_envs, self.action_dim), dtype=np.float32)
+        self.observations = np.zeros(
+            (self.buffer_size, self.n_envs, *self.obs_shape), dtype=np.float32
+        )
+        self.actions = np.zeros(
+            (self.buffer_size, self.n_envs, self.action_dim), dtype=np.float32
+        )
         self.rewards = np.zeros((self.buffer_size, self.n_envs), dtype=np.float32)
         self.returns = np.zeros((self.buffer_size, self.n_envs), dtype=np.float32)
-        self.episode_starts = np.zeros((self.buffer_size, self.n_envs), dtype=np.float32)
+        self.episode_starts = np.zeros(
+            (self.buffer_size, self.n_envs), dtype=np.float32
+        )
         self.values = np.zeros((self.buffer_size, self.n_envs), dtype=np.float32)
         self.log_probs = np.zeros((self.buffer_size, self.n_envs), dtype=np.float32)
         self.advantages = np.zeros((self.buffer_size, self.n_envs), dtype=np.float32)
 
-        self.legal_actions = np.zeros((self.buffer_size, self.n_envs, self.action_space_size), dtype=np.float32)
+        self.legal_actions = np.zeros(
+            (self.buffer_size, self.n_envs, self.action_space_size), dtype=np.float32
+        )
         self.generator_ready = False
         super().reset()
 
-    def compute_returns_and_advantage(self, last_values: torch.Tensor, dones: np.ndarray) -> None:
+    def compute_returns_and_advantage(
+        self, last_values: torch.Tensor, dones: np.ndarray
+    ) -> None:
         """
         Post-processing step: compute the lambda-return (TD(lambda) estimate)
         and GAE(lambda) advantage.
@@ -246,18 +258,32 @@ class RolloutBuffer(BaseBuffer):
             else:
                 next_non_terminal = 1.0 - self.episode_starts[step + 1]
                 next_values = self.values[step + 1]
-            delta = self.rewards[step] + self.gamma * next_values * next_non_terminal - self.values[step]
-            last_gae_lam = delta + self.gamma * self.gae_lambda * next_non_terminal * last_gae_lam
+            delta = (
+                self.rewards[step]
+                + self.gamma * next_values * next_non_terminal
+                - self.values[step]
+            )
+            last_gae_lam = (
+                delta + self.gamma * self.gae_lambda * next_non_terminal * last_gae_lam
+            )
             self.advantages[step] = last_gae_lam
         # TD(lambda) estimator, see Github PR #375 or "Telescoping in TD(lambda)"
         # in David Silver Lecture 4: https://www.youtube.com/watch?v=PnHCvfgC_ZA
         self.returns = self.advantages + self.values
 
     def compute_rewards(self, reward: dict) -> int:
-        _reward = reward["score"] * 0.2 + reward["cancel_score"] + reward["damage_on_monster"] - reward["damage_on_user"] + reward.get("game", 0)
-        target_min, target_max = -20, 16
+        _reward = (
+            reward["score"] * 0.05
+            + reward["cancel_score"]
+            + reward["damage_on_monster"]
+            - reward["damage_on_user"]
+            + reward.get("game", 0)
+        )
+        target_min, target_max = -25, 20
         reward_min, reward_max = -100, 80
-        new_reward = ((_reward - reward_min) / (reward_max - reward_min) * (target_max - target_min) + target_min)
+        new_reward = (_reward - reward_min) / (reward_max - reward_min) * (
+            target_max - target_min
+        ) + target_min
         print(new_reward)
         return new_reward
 
@@ -269,7 +295,7 @@ class RolloutBuffer(BaseBuffer):
         episode_start: np.ndarray,
         value: torch.Tensor,
         log_prob: torch.Tensor,
-        legal_actions: torch.Tensor
+        legal_actions: torch.Tensor,
     ) -> None:
         """
         :param obs: Observation
@@ -299,13 +325,15 @@ class RolloutBuffer(BaseBuffer):
         self.episode_starts[self.pos] = np.array(episode_start)
         self.values[self.pos] = value.clone().cpu().numpy().flatten()
         self.log_probs[self.pos] = log_prob.clone().cpu().numpy()
-        
+
         self.legal_actions[self.pos] = np.array(legal_actions)
         self.pos += 1
         if self.pos == self.buffer_size:
             self.full = True
 
-    def get(self, batch_size: Optional[int] = None) -> Generator[RolloutBufferSamples, None, None]:
+    def get(
+        self, batch_size: Optional[int] = None
+    ) -> Generator[RolloutBufferSamples, None, None]:
         assert self.full, ""
         indices = np.random.permutation(self.buffer_size * self.n_envs)
         # Prepare the data
@@ -318,7 +346,7 @@ class RolloutBuffer(BaseBuffer):
                 "advantages",
                 "returns",
                 "rewards",
-                "legal_actions"
+                "legal_actions",
             ]
 
             for tensor in _tensor_names:
@@ -337,7 +365,7 @@ class RolloutBuffer(BaseBuffer):
     def _get_samples(
         self,
         batch_inds: np.ndarray,
-        env = None,
+        env=None,
     ) -> RolloutBufferSamples:
         data = (
             self.observations[batch_inds],
@@ -347,7 +375,7 @@ class RolloutBuffer(BaseBuffer):
             self.advantages[batch_inds].flatten(),
             self.returns[batch_inds].flatten(),
             self.rewards[batch_inds].flatten(),
-            self.legal_actions[batch_inds]
+            self.legal_actions[batch_inds],
         )
         return RolloutBufferSamples(*tuple(map(self.to_torch, data)))
 
@@ -391,9 +419,13 @@ class DictRolloutBuffer(RolloutBuffer):
         gamma: float = 0.99,
         n_envs: int = 1,
     ):
-        super(RolloutBuffer, self).__init__(buffer_size, observation_space, action_space, device, n_envs=n_envs)
+        super(RolloutBuffer, self).__init__(
+            buffer_size, observation_space, action_space, device, n_envs=n_envs
+        )
 
-        assert isinstance(self.obs_shape, dict), "DictRolloutBuffer must be used with Dict obs space only"
+        assert isinstance(
+            self.obs_shape, dict
+        ), "DictRolloutBuffer must be used with Dict obs space only"
 
         self.gae_lambda = gae_lambda
         self.gamma = gamma
@@ -404,11 +436,17 @@ class DictRolloutBuffer(RolloutBuffer):
     def reset(self) -> None:
         self.observations = {}
         for key, obs_input_shape in self.obs_shape.items():
-            self.observations[key] = np.zeros((self.buffer_size, self.n_envs, *obs_input_shape), dtype=np.float32)
-        self.actions = np.zeros((self.buffer_size, self.n_envs, self.action_dim), dtype=np.float32)
+            self.observations[key] = np.zeros(
+                (self.buffer_size, self.n_envs, *obs_input_shape), dtype=np.float32
+            )
+        self.actions = np.zeros(
+            (self.buffer_size, self.n_envs, self.action_dim), dtype=np.float32
+        )
         self.rewards = np.zeros((self.buffer_size, self.n_envs), dtype=np.float32)
         self.returns = np.zeros((self.buffer_size, self.n_envs), dtype=np.float32)
-        self.episode_starts = np.zeros((self.buffer_size, self.n_envs), dtype=np.float32)
+        self.episode_starts = np.zeros(
+            (self.buffer_size, self.n_envs), dtype=np.float32
+        )
         self.values = np.zeros((self.buffer_size, self.n_envs), dtype=np.float32)
         self.log_probs = np.zeros((self.buffer_size, self.n_envs), dtype=np.float32)
         self.advantages = np.zeros((self.buffer_size, self.n_envs), dtype=np.float32)
@@ -487,10 +525,13 @@ class DictRolloutBuffer(RolloutBuffer):
     def _get_samples(  # type: ignore[override]
         self,
         batch_inds: np.ndarray,
-        env = None,
+        env=None,
     ) -> DictRolloutBufferSamples:
         return DictRolloutBufferSamples(
-            observations={key: self.to_torch(obs[batch_inds]) for (key, obs) in self.observations.items()},
+            observations={
+                key: self.to_torch(obs[batch_inds])
+                for (key, obs) in self.observations.items()
+            },
             actions=self.to_torch(self.actions[batch_inds]),
             old_values=self.to_torch(self.values[batch_inds].flatten()),
             old_log_prob=self.to_torch(self.log_probs[batch_inds].flatten()),

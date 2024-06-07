@@ -6,30 +6,57 @@ from gym_match3.envs.levels import Match3Levels, LEVELS
 from training.ppo import PPO
 from training.m3_model.m3_cnn import M3CnnFeatureExtractor
 
+
 def get_args():
-    parser = argparse.ArgumentParser('BEiT fine-tuning and evaluation script for image classification', add_help=False)
+    parser = argparse.ArgumentParser(
+        "BEiT fine-tuning and evaluation script for image classification",
+        add_help=False,
+    )
     # Model Information
-    parser.add_argument("--prefix_name", type=str, default="m3_with_cnn",
-                        help='prefix name of the model')
+    parser.add_argument(
+        "--prefix_name",
+        type=str,
+        default="m3_with_cnn",
+        help="prefix name of the model",
+    )
     # Rollout Data
-    parser.add_argument('--n_steps', type=int, default=32, metavar='n_steps',
-                        help='rollout data length (default: 32)')
+    parser.add_argument(
+        "--n_steps",
+        type=int,
+        default=32,
+        metavar="n_steps",
+        help="rollout data length (default: 32)",
+    )
 
     # Optimizer parameters
-    parser.add_argument('--lr', type=float, default=0.0003, metavar='LR',
-                        help='learning rate (default: 0.003)')
-    parser.add_argument('--batch_size', default=128, type=int)
-    parser.add_argument('--epochs', default=20, type=int)
+    parser.add_argument(
+        "--lr",
+        type=float,
+        default=0.0003,
+        metavar="LR",
+        help="learning rate (default: 0.003)",
+    )
+    parser.add_argument("--batch_size", default=128, type=int)
+    parser.add_argument("--epochs", default=20, type=int)
 
     # Continue training
-    parser.add_argument('--checkpoint', default=None, type=str,
-                        help="Path to current checkpoint to continue training")
+    parser.add_argument(
+        "--checkpoint",
+        default=None,
+        type=str,
+        help="Path to current checkpoint to continue training",
+    )
 
-    #Logging
-    parser.add_argument('--wandb', action='store_true', default=False,
-                        help="Whether want to logging onto Wandb")
+    # Logging
+    parser.add_argument(
+        "--wandb",
+        action="store_true",
+        default=False,
+        help="Whether want to logging onto Wandb",
+    )
 
     return parser.parse_args()
+
 
 args = get_args()
 env = Match3Env(90)
@@ -48,21 +75,24 @@ PPO_trainer = PPO(
         "features_extractor_kwargs": {
             "mid_channels": 64,
             "out_channels": 161,
-            "num_first_cnn_layer": 8
+            "num_first_cnn_layer": 8,
         },
         "optimizer_class": torch.optim.Adam,
-        "share_features_extractor": True
+        "share_features_extractor": True,
     },
     _checkpoint=args.checkpoint,
     _wandb=args.wandb,
     device="cuda",
-    prefix_name=args.prefix_name
+    prefix_name=args.prefix_name,
 )
 
 while True:
     import time
+
     s_t = time.time()
-    PPO_trainer.collect_rollouts(PPO_trainer.env, PPO_trainer.rollout_buffer, PPO_trainer.n_steps)
+    PPO_trainer.collect_rollouts(
+        PPO_trainer.env, PPO_trainer.rollout_buffer, PPO_trainer.n_steps
+    )
     print("collect data", time.time() - s_t)
     s_t = time.time()
     PPO_trainer.train()

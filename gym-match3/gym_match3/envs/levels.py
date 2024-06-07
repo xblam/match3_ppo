@@ -131,8 +131,8 @@ class Match3Levels:
 
 LEVELS = [
     Level(10, 9, 5, [
-        [0, 0, 0, 0, 0, 0, 0, -1, -1],
-        [0, 0, 0, 0, 0, 0, 0, -1, -1],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -145,45 +145,65 @@ LEVELS = [
         DameMonster(position=Point(6, 6),
                     width=2,
                     height=2,
-                    hp=40
-                    )
-    ]),
-
-    Level(10, 9, 5, [
-        [-1, -1, 0, 0, 0, 0, 0, 0, 0],
-        [-1, -1, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, GameObject.monster_dame, GameObject.monster_dame, 0, 0, 0],
-        [0, 0, 0, 0, GameObject.monster_dame, GameObject.monster_dame, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, -1, -1],
-        [0, 0, 0, 0, 0, 0, 0, -1, -1],
-    ], [
-        DameMonster(position=Point(4, 4),
-                    width=2,
-                    height=2,
                     hp=30
                     )
     ]),
 
     Level(10, 9, 5, [
-        [-1, 0, 0, 0, 0, 0, 0, 0, 0],
-        [-1, 0, 0, 0, 0, 0, 0, 0, 0],
-        [-1, 0, 0, 0, 0, 0, 0, 0, 0],
-        [-1, 0, 0, 0, 0, 0, 0, 0, 0],
-        [-1, 0, 0, 0, GameObject.monster_dame, GameObject.monster_dame, 0, 0, 0],
-        [-1, 0, 0, 0, GameObject.monster_dame, GameObject.monster_dame, 0, 0, 0],
-        [-1, 0, 0, 0, 0, 0, 0, 0, 0],
-        [-1, 0, 0, 0, 0, 0, 0, 0, 0],
-        [-1, 0, 0, 0, 0, 0, 0, 0, 0],
-        [-1, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [-1, -1, -1, -1, -1, -1, -1, -1, -1],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, GameObject.monster_dame, GameObject.monster_dame, 0],
+        [0, 0, 0, 0, 0, 0, GameObject.monster_dame, GameObject.monster_dame, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0],
+    ], [
+        DameMonster(position=Point(6, 6),
+                    width=2,
+                    height=2,
+                    hp=35
+                    )
+    ]),
+
+    Level(10, 9, 5, [
+        [-1, -1, 0, 0, 0, 0, 0, 0, 0],
+        [-1, -1, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, GameObject.monster_dame, GameObject.monster_dame, 0, 0, 0],
+        [0, 0, 0, 0, GameObject.monster_dame, GameObject.monster_dame, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, -1, -1],
+        [0, 0, 0, 0, 0, 0, 0, -1, -1],
     ], [
         DameMonster(position=Point(4, 4),
                     width=2,
                     height=2,
-                    hp=40
+                    hp=30,
+                    have_paper_box=True
+                    )
+    ]),
+
+    Level(10, 9, 5, [
+        [0, 0, 0, -1, 0, 0, 0, 0, 0],
+        [0, 0, 0, -1, 0, 0, 0, 0, 0],
+        [0, 0, 0, -1, 0, 0, 0, 0, 0],
+        [0, 0, 0, -1, 0, 0, 0, 0, 0],
+        [0, 0, 0, -1, GameObject.monster_dame, GameObject.monster_dame, 0, 0, 0],
+        [0, 0, 0, -1, GameObject.monster_dame, GameObject.monster_dame, 0, 0, 0],
+        [0, 0, 0, -1, 0, 0, 0, 0, 0],
+        [0, 0, 0, -1, 0, 0, 0, 0, 0],
+        [0, 0, 0, -1, 0, 0, 0, 0, 0],
+        [0, 0, 0, -1, 0, 0, 0, 0, 0],
+    ], [
+        DameMonster(position=Point(4, 4),
+                    width=2,
+                    height=2,
+                    hp=35
                     )
     ]),
 
@@ -192,8 +212,8 @@ LEVELS = [
         [GameObject.monster_dame, GameObject.monster_dame, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [-1, -1, 0, 0, 0, 0, 0, -1, -1],
-        [-1, -1, 0, 0, 0, 0, 0, -1, -1],
+        [0, 0, 0, 0, 0, 0, 0, -1, -1],
+        [0, 0, 0, 0, 0, -1, -1, -1, -1],
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -202,7 +222,9 @@ LEVELS = [
         DameMonster(position=Point(0, 0),
                     width=2,
                     height=2,
-                    hp=40
+                    hp=35,
+                    dame=2,
+                    have_paper_box=True
                     )
     ]),
 
@@ -246,18 +268,20 @@ LEVELS = [
                     )
     ]),
 
-    Level(10, 9, 5, [
-        [GameObject.monster_dame, GameObject.monster_dame, 0, 0, 0, 0, 0, 0, 0],
-        [GameObject.monster_dame, GameObject.monster_dame, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, GameObject.monster_dame, GameObject.monster_dame, 0],
-        [0, 0, 0, 0, 0, 0, GameObject.monster_dame, GameObject.monster_dame, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0],
-    ], [
+    Level(
+        10, 9, 5, 
+        [
+            [GameObject.monster_dame, GameObject.monster_dame, 0, 0, 0, 0, 0, 0, 0],
+            [GameObject.monster_dame, GameObject.monster_dame, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, GameObject.monster_dame, GameObject.monster_dame, 0],
+            [0, 0, 0, 0, 0, 0, GameObject.monster_dame, GameObject.monster_dame, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0],
+        ], [
         DameMonster(position=Point(0, 0),
                     width=2,
                     height=2,
@@ -316,7 +340,7 @@ LEVELS = [
         DameMonster(position=Point(0, 7),
                     width=2,
                     height=2,
-                    hp=25
+                    hp=15
                     )
     ]),
 

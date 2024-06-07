@@ -16,11 +16,14 @@ import wandb
 
 BOARD_NDIM = 2
 
+
 class Match3Env(gym.Env):
-    metadata = {'render.modes': None}
+    metadata = {"render.modes": None}
     result_step = 0
 
-    def __init__(self, rollout_len=100, all_moves=False, levels=None, random_state=None):
+    def __init__(
+        self, rollout_len=100, all_moves=False, levels=None, random_state=None
+    ):
         self.num_envs = 1
         self.rollout_len = rollout_len
         self.random_state = random_state
@@ -38,7 +41,8 @@ class Match3Env(gym.Env):
             n_shapes=self.n_shapes,
             length=3,
             all_moves=all_moves,
-            random_state=self.random_state)
+            random_state=self.random_state,
+        )
         self.reset()
         self.renderer = Renderer(self.n_shapes)
 
@@ -47,16 +51,16 @@ class Match3Env(gym.Env):
             low=GameObject.color1,
             high=self.n_shapes + 1,
             shape=(len(self.helper.obs_order), *self.__game.board.board_size),
-            dtype=int)
+            dtype=int,
+        )
 
         # setting actions space
         self.__match3_actions = self.__get_available_actions_in_order()
-        self.action_space = spaces.Discrete(
-            len(self.__match3_actions))
+        self.action_space = spaces.Discrete(len(self.__match3_actions))
 
     @staticmethod
     def __get_directions(board_ndim):
-        """ get available directions for any number of dimensions """
+        """get available directions for any number of dimensions"""
         directions = [
             [[0 for _ in range(board_ndim)] for _ in range(2)]
             for _ in range(board_ndim)
@@ -67,14 +71,14 @@ class Match3Env(gym.Env):
         return directions
 
     def __points_generator(self):
-        """ iterates over points on the board """
+        """iterates over points on the board"""
         rows, cols = self.__game.board.board_size
         points = [Point(i, j) for i, j in product(range(rows), range(cols))]
         for point in points:
             yield point
 
     def __get_available_actions(self):
-        """ calculate available actions for current board sizes """
+        """calculate available actions for current board sizes"""
         actions = set()
         directions = self.__get_directions(board_ndim=BOARD_NDIM)
         for point in self.__points_generator():
@@ -88,9 +92,9 @@ class Match3Env(gym.Env):
                     except OutOfBoardError:
                         continue
         return list(actions)
-    
+
     def __get_available_actions_in_order(self):
-        """ calculate available actions for current board sizes in presented order"""
+        """calculate available actions for current board sizes in presented order"""
         actions = []
         rows, cols = self.__game.board.board_size
         for i in range(rows):
@@ -129,30 +133,46 @@ class Match3Env(gym.Env):
 
         # change counter even action wasn't successful
         self.__episode_counter += 1
-        if self.__episode_counter >= self.rollout_len or is_early_done_game or self.__game.get_player_hp() <= 0:
+        if (
+            self.__episode_counter >= self.rollout_len
+            or is_early_done_game
+            or self.__game.get_player_hp() <= 0
+        ):
             episode_over = True
             self.__episode_counter = 0
 
             num_alive_mons = len(self.__game.list_monsters)
             if self.__game.get_player_hp() <= 0:
-                reward.update({
-                    "game": -100
-                })
+                reward.update({"game": -100})
             else:
-                reward.update({
-                    "game": (-30 - 1 * sum([mon.get_hp() for mon in self.__game.list_monsters if mon.real_monster]) if not is_early_done_game else 30 + 10 * self.__game.num_mons)
-                })
-            
+                reward.update(
+                    {
+                        "game": (
+                            -30
+                            - 1
+                            * sum(
+                                [
+                                    mon.get_hp()
+                                    for mon in self.__game.list_monsters
+                                    if mon.real_monster
+                                ]
+                            )
+                            if not is_early_done_game
+                            else 30 + 10 * self.__game.num_mons
+                        )
+                    }
+                )
+
             # print(reward) #openlater
             self.result_step += 1
             obs, infos = self.reset()
-            
+
             return obs, reward, episode_over, infos
         else:
             episode_over = False
             ob["board"] = self.__get_board()
             ob["list_monster"] = self.__game.list_monsters
-        
+
         # print("play time", time.time() - s_t)
         s_t = time.time()
 
@@ -160,9 +180,12 @@ class Match3Env(gym.Env):
 
         # print("process obs", time.time() - s_t)
 
-        return self.helper.obs_to_tensor(obs["obs"]), reward, episode_over, {
-            "action_space": obs["action_space"]
-        }
+        return (
+            self.helper.obs_to_tensor(obs["obs"]),
+            reward,
+            episode_over,
+            {"action_space": obs["action_space"]},
+        )
 
     def reset(self, *args, **kwargs):
         board, list_monsters = self.levels.next()
@@ -171,7 +194,6 @@ class Match3Env(gym.Env):
         return self.helper.obs_to_tensor(obs["obs"]), {
             "action_space": obs["action_space"]
         }
-        
 
     def __swap(self, point1, point2):
         try:
@@ -183,7 +205,7 @@ class Match3Env(gym.Env):
     def __get_board(self):
         return self.__game.board.board.copy()
 
-    def render(self, mode='human', close=False):
+    def render(self, mode="human", close=False):
         if close:
             warnings.warn("close=True isn't supported yet")
         self.renderer.render_board(self.__game.board)
