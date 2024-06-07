@@ -9,18 +9,12 @@ import datetime
 
 from training.common.buffers import RolloutBuffer
 from training.common.on_policy_algorithm import OnPolicyAlgorithm
-from training.common.policies import (
-    ActorCriticCnnPolicy,
-    ActorCriticPolicy,
-    BasePolicy,
-    MultiInputActorCriticPolicy,
-)
+from training.common.policies import ActorCriticCnnPolicy, ActorCriticPolicy, BasePolicy, MultiInputActorCriticPolicy
 from training.common.type_aliases import GymEnv, Schedule
 from training.common.utils import explained_variance, get_schedule_fn
 
 from training.common import utils
 import wandb
-
 logger = utils.configure_logger(1)
 
 
@@ -115,7 +109,7 @@ class PPO(OnPolicyAlgorithm):
         policy_kwargs: Optional[Dict[str, Any]] = None,
         verbose: int = 0,
         seed: Optional[int] = None,
-        _checkpoint: str = None,
+        _checkpoint:str = None,
         _wandb: bool = False,
         device: Union[th.device, str] = "auto",
         prefix_name: str = "m3_with_cnn",
@@ -194,7 +188,9 @@ class PPO(OnPolicyAlgorithm):
         self._model_name = f"{prefix_name}_{learning_rate}_{n_steps}_{'' if policy_kwargs['share_features_extractor'] else 'not_'}share_{datetime.datetime.today().strftime('%Y%m%d')}"
         self._wandb = _wandb
         if self._wandb:
-            wandb.init(project="m3_with_cnn", name=self._model_name)
+            wandb.init(project="m3_with_cnn", 
+                       name=self._model_name)
+        
 
     def _setup_model(self) -> None:
         super()._setup_model()
@@ -202,19 +198,16 @@ class PPO(OnPolicyAlgorithm):
         self.lr_scheduler = th.optim.lr_scheduler.CosineAnnealingLR(
             self.policy.optimizer,
             T_max=500,
-            eta_min=1e-7,  # Minimum learning rate
-            last_epoch=-1,
-            verbose=True,
+            eta_min = 1e-7, # Minimum learning rate
+            last_epoch = -1,
+            verbose=True
         )
 
         # Initialize schedules for policy/value clipping
         self.clip_range = get_schedule_fn(self.clip_range)
         if self.clip_range_vf is not None:
             if isinstance(self.clip_range_vf, (float, int)):
-                assert self.clip_range_vf > 0, (
-                    "`clip_range_vf` must be positive, "
-                    "pass `None` to deactivate vf clipping"
-                )
+                assert self.clip_range_vf > 0, "`clip_range_vf` must be positive, " "pass `None` to deactivate vf clipping"
 
             self.clip_range_vf = get_schedule_fn(self.clip_range_vf)
 
@@ -250,9 +243,7 @@ class PPO(OnPolicyAlgorithm):
                     mean_rewards.extend(rollout_data.rewards.cpu().flatten().tolist())
                     mean_values.extend(rollout_data.old_values.cpu().flatten().tolist())
                     mean_returns.extend(rollout_data.returns.cpu().flatten().tolist())
-                    mean_advantage.extend(
-                        rollout_data.advantages.cpu().flatten().tolist()
-                    )
+                    mean_advantage.extend(rollout_data.advantages.cpu().flatten().tolist())
                 actions = rollout_data.actions
                 if isinstance(self.action_space, spaces.Discrete):
                     # Convert discrete action from float to long
@@ -262,26 +253,20 @@ class PPO(OnPolicyAlgorithm):
                 if self.use_sde:
                     self.policy.reset_noise(self.batch_size)
 
-                values, log_prob, entropy = self.policy.evaluate_actions(
-                    rollout_data.observations, actions, rollout_data.legal_actions
-                )
+                values, log_prob, entropy = self.policy.evaluate_actions(rollout_data.observations, actions, rollout_data.legal_actions)
                 values = values.flatten()
                 # Normalize advantage
                 advantages = rollout_data.advantages
                 # Normalization does not make sense if mini batchsize == 1, see GH issue #325
                 if self.normalize_advantage and len(advantages) > 1:
-                    advantages = (advantages - advantages.mean()) / (
-                        advantages.std() + 1e-8
-                    )
+                    advantages = (advantages - advantages.mean()) / (advantages.std() + 1e-8)
 
                 # ratio between old and new policy, should be one at the first iteration
                 ratio = th.exp(log_prob - rollout_data.old_log_prob)
 
                 # clipped surrogate loss
                 policy_loss_1 = advantages * ratio
-                policy_loss_2 = advantages * th.clamp(
-                    ratio, 1 - clip_range, 1 + clip_range
-                )
+                policy_loss_2 = advantages * th.clamp(ratio, 1 - clip_range, 1 + clip_range)
                 policy_loss = -th.min(policy_loss_1, policy_loss_2).mean()
 
                 # Logging
@@ -311,11 +296,7 @@ class PPO(OnPolicyAlgorithm):
 
                 entropy_losses.append(entropy_loss.item())
 
-                loss = (
-                    policy_loss
-                    + self.ent_coef * entropy_loss
-                    + self.vf_coef * value_loss
-                )
+                loss = policy_loss + self.ent_coef * entropy_loss + self.vf_coef * value_loss
 
                 # Calculate approximate form of reverse KL Divergence for early stopping
                 # see issue #417: https://github.com/DLR-RM/stable-baselines3/issues/417
@@ -323,38 +304,31 @@ class PPO(OnPolicyAlgorithm):
                 # and Schulman blog: http://joschu.net/blog/kl-approx.html
                 with th.no_grad():
                     log_ratio = log_prob - rollout_data.old_log_prob
-                    approx_kl_div = (
-                        th.mean((th.exp(log_ratio) - 1) - log_ratio).cpu().numpy()
-                    )
+                    approx_kl_div = th.mean((th.exp(log_ratio) - 1) - log_ratio).cpu().numpy()
                     approx_kl_divs.append(approx_kl_div)
 
                 if self.target_kl is not None and approx_kl_div > 1.5 * self.target_kl:
                     continue_training = False
                     if self.verbose >= 1:
-                        print(
-                            f"Early stopping at step {epoch} due to reaching max kl: {approx_kl_div:.2f}"
-                        )
+                        print(f"Early stopping at step {epoch} due to reaching max kl: {approx_kl_div:.2f}")
                     break
 
                 # Optimization step
                 self.policy.optimizer.zero_grad()
                 loss.backward()
                 # Clip grad norm
-                th.nn.utils.clip_grad_norm_(
-                    self.policy.parameters(), self.max_grad_norm
-                )
+                th.nn.utils.clip_grad_norm_(self.policy.parameters(), self.max_grad_norm)
                 self.policy.optimizer.step()
 
             self._n_updates += 1
             if not continue_training:
                 break
-
+        
+        
         # Update optimizer learning rate
         self.lr_scheduler.step()
 
-        explained_var = explained_variance(
-            self.rollout_buffer.values.flatten(), self.rollout_buffer.returns.flatten()
-        )
+        explained_var = explained_variance(self.rollout_buffer.values.flatten(), self.rollout_buffer.returns.flatten())
 
         # Logs
         self.logger.record("train/entropy_loss", np.mean(entropy_losses))
@@ -373,27 +347,28 @@ class PPO(OnPolicyAlgorithm):
             self.logger.record("train/clip_range_vf", clip_range_vf)
 
         stats = {
-            "lr": self.lr_scheduler.get_lr()[-1],
-            "Train/entropy_loss": np.mean(entropy_losses),
-            "Train/policy_gradient_loss": np.mean(pg_losses),
-            "Train/value_loss": np.mean(value_losses),
-            "Train/approx_kl": np.mean(approx_kl_divs),
-            "Train/clip_fraction": np.mean(clip_fractions),
-            "Train/loss": loss.item(),
+            "lr":self.lr_scheduler.get_lr()[-1], 
+            "Train/entropy_loss":np.mean(entropy_losses),
+            "Train/policy_gradient_loss":np.mean(pg_losses),
+            "Train/value_loss":np.mean(value_losses),
+            "Train/approx_kl":np.mean(approx_kl_divs),
+            "Train/clip_fraction":np.mean(clip_fractions),
+            "Train/loss":loss.item(),
             # "Train/explained_variance":explained_var,
-            "Train/clip_range": clip_range,
-            "Train/n_updates": self._n_updates,
+            "Train/clip_range":clip_range,
+            "Train/n_updates":self._n_updates,
             "Train/explained_variance": explained_var,
-            "Reward/advantages": np.mean(mean_advantage),
-            "Reward/returns": np.mean(mean_returns),
-            "Reward/values": np.mean(mean_values),
-            "Reward/rewards": np.mean(mean_rewards),
+
+            "Reward/advantages":np.mean(mean_advantage),
+            "Reward/returns":np.mean(mean_returns),
+            "Reward/values":np.mean(mean_values),
+            "Reward/rewards":np.mean(mean_rewards)
         }
         # if hasattr(self._policy, "log_std"):
         #     stats["train/std"]=th.exp(self._policy.log_std).mean().item(),
 
         if self.clip_range_vf is not None:
-            stats["train/clip_range_vf"] = clip_range_vf
+            stats["train/clip_range_vf"]=clip_range_vf
 
         self.train_log(stats)
         self.policy.save(path=f".\_saved_model\{self._model_name}.pt")

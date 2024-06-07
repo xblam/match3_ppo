@@ -949,17 +949,10 @@ class AbstractMonster(ABC):
     @property
     def dmg_mask(self):
         return (
-            self.__left_dmg_mask
-            if self.available_mask[0]
-            else (
-                [] + self.__right_dmg_mask
-                if self.available_mask[1]
-                else (
-                    [] + self.__top_dmg_mask
-                    if self.available_mask[2]
-                    else [] + self.__down_dmg_mask if self.available_mask[3] else []
-                )
-            )
+            (self.__left_dmg_mask if self.available_mask[0] else [])
+            + (self.__right_dmg_mask if self.available_mask[1] else [])
+            + (self.__top_dmg_mask if self.available_mask[2] else [])
+            + (self.__down_dmg_mask if self.available_mask[3] else [])
         )
 
     @property
@@ -993,8 +986,8 @@ class AbstractMonster(ABC):
         else:
             damage = match_damage + pu_damage
 
-        assert self._hp > 0, f"self._hp need to be positive, but self._hp = {self._hp}"
-        self._hp -= damage
+            assert self._hp > 0, f"self._hp need to be positive, but self._hp = {self._hp}"
+            self._hp -= damage
 
     @staticmethod
     def __get_left_mask(point: Point, height: int):
@@ -1033,7 +1026,6 @@ class AbstractMonster(ABC):
         """
         # print("Im mons, get dame from brokens", brokens)
         __matches = [ele.point for ele in matches]
-        # print(set(self.dmg_mask) & set(__matches))
         return len(set(self.dmg_mask) & set(__matches)), len(
             set(self.inside_dmg_mask) & set(brokens)
         )
@@ -1052,7 +1044,7 @@ class DameMonster(AbstractMonster):
         cancel_dame=5,
         have_paper_box: bool = False,
     ):
-        super().__init__(relax_interval, setup_interval, position, hp, width, height)
+        super().__init__(relax_interval, setup_interval, position, hp, width, height, have_paper_box)
 
         self._damage = dame
 
@@ -1071,7 +1063,7 @@ class DameMonster(AbstractMonster):
                     "cancel_score": 2,
                 }
         else:
-            if self._paper_box_hp == 0:
+            if self._paper_box_hp < 0:
                 self.available_mask = [1, 1, 1, 1, 1]
                 self._progress = 0
 
@@ -1091,7 +1083,7 @@ class DameMonster(AbstractMonster):
             if not self.have_paper_box:
                 self._cancel -= damage
             else:
-                if self._paper_box_hp == 0:
+                if self._paper_box_hp <= 0:
                     self._paper_box_hp = self._setup_interval
                     self.available_mask = [1, 1, 1, 1, 0]
                 super().attacked(match_damage, pu_damage)
@@ -1112,7 +1104,7 @@ class BoxMonster(AbstractMonster):
         height: int = 1,
         have_paper_box: bool = False,
     ):
-        super().__init__(relax_interval, 0, position, hp, width, height)
+        super().__init__(relax_interval, 0, position, hp, width, height, have_paper_box)
         self.__box_monster_type = box_mons_type
 
     def act(self):

@@ -69,6 +69,7 @@ PPO_trainer = PPO(
     env=env,
     learning_rate=args.lr,
     n_steps=args.n_steps,
+    ent_coef=0.00001,
     policy_kwargs={
         "net_arch": dict(pi=[], vf=[161, 32]),
         "features_extractor_class": M3CnnFeatureExtractor,
