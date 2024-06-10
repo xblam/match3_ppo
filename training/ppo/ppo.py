@@ -185,7 +185,7 @@ class PPO(OnPolicyAlgorithm):
             print(f"Load checkpoint from {self._checkpoint}")
             self.policy = self.policy.load(path=self._checkpoint, device=self.device)
 
-        self._model_name = f"{prefix_name}_{learning_rate}_{n_steps}_{'' if policy_kwargs['share_features_extractor'] else 'not_'}share_{datetime.datetime.today().strftime('%Y%m%d')}"
+        self._model_name = f"{prefix_name}_{policy_kwargs['features_extractor_kwargs']['num_first_cnn_layer']}layers_{policy_kwargs['features_extractor_kwargs']['mid_channels']}channels_{learning_rate}_{n_steps}_{'' if policy_kwargs['share_features_extractor'] else 'not_'}share_{datetime.datetime.today().strftime('%Y%m%d')}"
         self._wandb = _wandb
         if self._wandb:
             wandb.init(project="m3_with_cnn", 

@@ -19,6 +19,19 @@ def get_args():
         default="m3_with_cnn",
         help="prefix name of the model",
     )
+    parser.add_argument(
+        "--mid_channels",
+        type=int,
+        default="64",
+        help="Number of intermediary channels in CNN model",
+    )
+    parser.add_argument(
+        "--num_first_cnn_layer",
+        type=int,
+        default=4,
+        help="Number of intermediary layers in CNN model",
+    )
+
     # Rollout Data
     parser.add_argument(
         "--n_steps",
@@ -74,9 +87,9 @@ PPO_trainer = PPO(
         "net_arch": dict(pi=[], vf=[161, 32]),
         "features_extractor_class": M3CnnFeatureExtractor,
         "features_extractor_kwargs": {
-            "mid_channels": 64,
+            "mid_channels": args.mid_channels,
             "out_channels": 161,
-            "num_first_cnn_layer": 8,
+            "num_first_cnn_layer": args.num_first_cnn_layer,
         },
         "optimizer_class": torch.optim.Adam,
         "share_features_extractor": True,
