@@ -299,7 +299,7 @@ class Board(AbstractBoard):
     def _check_availability(self, *args):
         for p in args:
             shape = self.get_shape(p)
-            if shape == self.immovable_shape:
+            if shape == GameObject.immovable_shape:
                 raise ImmovableShapeError
 
     def delete(self, points: set, allow_delete_monsters: bool = False):
@@ -727,7 +727,14 @@ class PowerUpActivator(AbstractPowerUpActivator):
             for _dir in self.__plane_affect:
                 brokens.append(point + Point(*_dir))
             mons_pos = board.get_monster()
-            brokens.append(mons_pos[np.random.randint(0, len(mons_pos))])
+            try:
+                print(board)
+                brokens.append(mons_pos[np.random.randint(0, len(mons_pos))])
+            except:
+                print("No Monster on Board")
+                print(board)
+                raise Exception("huhuhuhuhuhu")
+
         elif power_up_type == GameObject.power_missile_h:
             pos = point.get_coord()
             for i in range(board.board_size[1]):
@@ -787,9 +794,10 @@ class MovesSearcher(AbstractMovesSearcher, MatchesSearcher):
         # check for powerup activation
         for point in self.points_generator(board):
             if board.get_shape(point) in GameObject.powers:
-                cnt = 0
                 for direction in self.directions_gen():
                     try:
+                        if board.get_shape(point + Point(*direction)) in np.concatenate([GameObject.monsters, GameObject.blockers]):
+                            continue
                         board.move(point, Point(*direction))
                         # inverse move
                         board.move(point, Point(*direction))
@@ -799,7 +807,6 @@ class MovesSearcher(AbstractMovesSearcher, MatchesSearcher):
                             break
 
                     except (OutOfBoardError, ImmovableShapeError):
-                        cnt += 1
                         continue
                 if not all_moves and not not_have_pu:
                     break
@@ -817,8 +824,13 @@ class MovesSearcher(AbstractMovesSearcher, MatchesSearcher):
     def __search_moves_for_point(self, board: Board, point: Point, need_all=True):
         # contain tuples of point and direction
         possible_moves = set()
+        if board.get_shape(point) in np.concatenate([GameObject.monsters, GameObject.blockers]):
+            return possible_moves
+        
         for direction in self.directions_gen():
             try:
+                if board.get_shape(point + Point(*direction)) in np.concatenate([GameObject.monsters, GameObject.blockers]):
+                    continue
                 board.move(point, Point(*direction))
                 matches, _ = self.scan_board_for_matches(board, need_all=need_all)
                 # inverse move
@@ -1301,9 +1313,14 @@ class Game(AbstractGame):
 
     def swap(self, point: Point, point2: Point):
         direction = point2 - point
-        score = self.__move(point, direction)
+        try:
+            score = self.__move(point, direction)
+            
+            return score
+        except:
+            print([mon.get_hp() for mon in self.list_monsters])
+            raise Exception("Error in swap")
 
-        return score
 
     def __move(self, point: Point, direction: Point):
         score = 0

@@ -47,7 +47,7 @@ def get_args():
         type=float,
         default=0.0003,
         metavar="LR",
-        help="learning rate (default: 0.003)",
+        help="learning rate (default: 0.0003)",
     )
     parser.add_argument("--batch_size", default=128, type=int)
     parser.add_argument("--epochs", default=20, type=int)
@@ -92,7 +92,7 @@ PPO_trainer = PPO(
             "num_first_cnn_layer": args.num_first_cnn_layer,
         },
         "optimizer_class": torch.optim.Adam,
-        "share_features_extractor": True,
+        "share_features_extractor": False,
     },
     _checkpoint=args.checkpoint,
     _wandb=args.wandb,

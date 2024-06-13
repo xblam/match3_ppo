@@ -145,7 +145,7 @@ LEVELS = [
         DameMonster(position=Point(6, 6),
                     width=2,
                     height=2,
-                    hp=30,
+                    hp=40,
                     )
     ]),
 
@@ -185,7 +185,9 @@ LEVELS = [
         DameMonster(position=Point(6, 6),
                     width=2,
                     height=2,
-                    hp=35
+                    hp=35,
+                    dame=2,
+                    have_paper_box=True
                     )
     ]),
 
@@ -266,7 +268,7 @@ LEVELS = [
                    position=Point(4, 4),
                    width=2,
                    height=2,
-                   hp=40
+                   hp=30
                    )
     ]),
 
@@ -286,7 +288,33 @@ LEVELS = [
                    position=Point(4, 4),
                    width=2,
                    height=2,
-                   hp=40
+                   hp=30
+                    )
+    ]),
+
+    Level(
+        10, 9, 5, 
+        [
+            [GameObject.monster_dame, GameObject.monster_dame, 0, 0, 0, 0, 0, 0, 0],
+            [GameObject.monster_dame, GameObject.monster_dame, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, GameObject.monster_dame, GameObject.monster_dame, 0],
+            [0, 0, 0, 0, 0, 0, GameObject.monster_dame, GameObject.monster_dame, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0],
+        ], [
+        DameMonster(position=Point(0, 0),
+                    width=2,
+                    height=2,
+                    hp=15
+                    ),
+        DameMonster(position=Point(7, 6),
+                    width=2,
+                    height=2,
+                    hp=15
                     )
     ]),
 
@@ -312,7 +340,7 @@ LEVELS = [
         DameMonster(position=Point(7, 6),
                     width=2,
                     height=2,
-                    hp=20
+                    hp=15
                     )
     ]),
 
@@ -337,7 +365,7 @@ LEVELS = [
         DameMonster(position=Point(7, 0),
                     width=2,
                     height=2,
-                    hp=25
+                    hp=20
                     )
     ]),
 

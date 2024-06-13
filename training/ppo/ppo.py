@@ -197,7 +197,7 @@ class PPO(OnPolicyAlgorithm):
 
         self.lr_scheduler = th.optim.lr_scheduler.CosineAnnealingLR(
             self.policy.optimizer,
-            T_max=500,
+            T_max=410,
             eta_min = 1e-7, # Minimum learning rate
             last_epoch = -1,
             verbose=True

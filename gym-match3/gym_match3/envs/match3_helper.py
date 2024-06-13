@@ -62,10 +62,7 @@ class M3Helper:
             and i < self.num_row
             and 0 <= j
             and j < self.num_col
-            and (
-                raw_board[i][j] in GameObject.powers
-                or raw_board[i][j] in GameObject.tiles
-            )
+            and raw_board[i][j] in np.concatenate([GameObject.powers, GameObject.tiles])
         )
 
     def check_required_tile(

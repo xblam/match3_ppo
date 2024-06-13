@@ -13,6 +13,7 @@ from itertools import product
 import warnings
 import time
 import wandb
+import numpy as np
 
 BOARD_NDIM = 2
 
@@ -141,7 +142,6 @@ class Match3Env(gym.Env):
             episode_over = True
             self.__episode_counter = 0
 
-            num_alive_mons = len(self.__game.list_monsters)
             if self.__game.get_player_hp() <= 0:
                 reward.update({"game": -100})
             else:
@@ -166,6 +166,7 @@ class Match3Env(gym.Env):
             # print(reward) #openlater
             self.result_step += 1
             obs, infos = self.reset()
+            reward
 
             return obs, reward, episode_over, infos
         else:
@@ -177,6 +178,14 @@ class Match3Env(gym.Env):
         s_t = time.time()
 
         obs = self.helper._format_observation(ob["board"], ob["list_monster"], "cpu")
+        # Check if non legal_action
+        if 1 not in np.unique(obs["action_space"]):
+            episode_over = True
+            self.__episode_counter = 0
+            reward.update({"game": -99})
+
+            obs, infos = self.reset()
+            return obs, reward, episode_over, infos
 
         # print("process obs", time.time() - s_t)
 
