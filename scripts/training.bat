@@ -1,1 +1,1 @@
-python training.py --prefix_name ppo_m3 --mid_channels 16 --num_first_cnn_layer 16 --checkpoint ./_saved_model/ppo_m3_with_cnn_deeper_16layers_16channels_3e-05_4096_not_share_20240611.pt --n_steps 4096 --lr 0.00002762
+python training.py --prefix_name ppo_m3_with_tut --mid_channels 16 --num_first_cnn_layer 16 --n_steps 16384 --lr 0.000003 --wandb

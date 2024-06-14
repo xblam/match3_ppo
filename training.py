@@ -22,7 +22,7 @@ def get_args():
     parser.add_argument(
         "--mid_channels",
         type=int,
-        default="64",
+        default=64,
         help="Number of intermediary channels in CNN model",
     )
     parser.add_argument(

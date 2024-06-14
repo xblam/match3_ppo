@@ -728,12 +728,10 @@ class PowerUpActivator(AbstractPowerUpActivator):
                 brokens.append(point + Point(*_dir))
             mons_pos = board.get_monster()
             try:
-                print(board)
                 brokens.append(mons_pos[np.random.randint(0, len(mons_pos))])
             except:
                 print("No Monster on Board")
                 print(board)
-                raise Exception("huhuhuhuhuhu")
 
         elif power_up_type == GameObject.power_missile_h:
             pos = point.get_coord()
@@ -928,6 +926,7 @@ class AbstractMonster(ABC):
         width: int = 1,
         height: int = 1,
         have_paper_box: bool = False,
+        request_masked: list[int] = None
     ):
         self.real_monster = True
         self._hp = hp
@@ -955,7 +954,8 @@ class AbstractMonster(ABC):
             for i, j in product(range(self._height), range(self._width))
         ]
         self.cause_dmg_mask = []
-
+        if request_masked is not None and len(request_masked) == 5:
+            self.available_mask = request_masked
         self.available_mask = [1, 1, 1, 1, 1]  # left, right, top, down, inside
 
     @property
@@ -1005,14 +1005,18 @@ class AbstractMonster(ABC):
     def __get_left_mask(point: Point, height: int):
         mask = []
         for i in range(height):
-            mask.append(point + Point(i, -1))
+            _point = point + Point(i, -1)
+            if _point.get_coord()[0] >= 0 and _point.get_coord()[1] >= 0:
+                mask.append(_point)
         return mask
 
     @staticmethod
     def __get_top_mask(point: Point, width: int):
         mask = []
         for i in range(width):
-            mask.append(point + Point(-1, i))
+            _point = point + Point(-1, i)
+            if _point.get_coord()[0] >= 0 and _point.get_coord()[1] >= 0:
+                mask.append(_point)
         return mask
 
     @staticmethod
@@ -1032,15 +1036,14 @@ class AbstractMonster(ABC):
     def get_hp(self):
         return self._hp
 
-    def get_dame(self, matches, brokens):
+    def get_dame(self, matches, brokens, disco_brokens):
         """
         return: match_damage, pu_damage
         """
         # print("Im mons, get dame from brokens", brokens)
         __matches = [ele.point for ele in matches]
-        return len(set(self.dmg_mask) & set(__matches)), len(
-            set(self.inside_dmg_mask) & set(brokens)
-        )
+        return len(set(self.dmg_mask) & set(__matches)), \
+            len(set(self.inside_dmg_mask) & set(brokens)) + len(set(self.dmg_mask) & set(disco_brokens))
 
 
 class DameMonster(AbstractMonster):
@@ -1055,8 +1058,9 @@ class DameMonster(AbstractMonster):
         dame=4,
         cancel_dame=5,
         have_paper_box: bool = False,
+        request_masked: list[int] = None
     ):
-        super().__init__(relax_interval, setup_interval, position, hp, width, height, have_paper_box)
+        super().__init__(relax_interval, setup_interval, position, hp, width, height, have_paper_box, request_masked)
 
         self._damage = dame
 
@@ -1319,7 +1323,12 @@ class Game(AbstractGame):
             return score
         except:
             print([mon.get_hp() for mon in self.list_monsters])
-            raise Exception("Error in swap")
+            return {
+                "score": 0,
+                "cancel_score": 0,
+                "damage_on_monster": 0,
+                "damage_on_user": 0,
+            }
 
 
     def __move(self, point: Point, direction: Point):
@@ -1332,12 +1341,12 @@ class Game(AbstractGame):
 
         s_t = time.time()
 
-        matches, new_power_ups, brokens = self.__check_matches(point, direction)
+        matches, new_power_ups, brokens, disco_brokens = self.__check_matches(point, direction)
 
-        score += len(brokens)
+        score += len(brokens) + len(disco_brokens)
 
         for i in range(len(self.list_monsters)):
-            match_damage, pu_damage = self.list_monsters[i].get_dame(matches, brokens)
+            match_damage, pu_damage = self.list_monsters[i].get_dame(matches, brokens, disco_brokens)
             dmg += match_damage + pu_damage
             score -= pu_damage
 
@@ -1400,8 +1409,7 @@ class Game(AbstractGame):
             tmp_board.delete(return_brokens)
             self.__filler.move_and_fill(tmp_board)
         matches, new_power_ups = self.__mtch_searcher.scan_board_for_matches(tmp_board)
-        matches |= disco_brokens
-        return matches, new_power_ups, return_brokens
+        return matches, new_power_ups, return_brokens, disco_brokens
 
     def _sweep_died_monster(self):
         mons_points = set()
