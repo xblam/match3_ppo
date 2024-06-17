@@ -92,7 +92,7 @@ PPO_trainer = PPO(
             "num_first_cnn_layer": args.num_first_cnn_layer,
         },
         "optimizer_class": torch.optim.Adam,
-        "share_features_extractor": False,
+        "share_features_extractor": True,
     },
     _checkpoint=args.checkpoint,
     _wandb=args.wandb,

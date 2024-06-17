@@ -371,7 +371,7 @@ class PPO(OnPolicyAlgorithm):
             stats["train/clip_range_vf"]=clip_range_vf
 
         self.train_log(stats)
-        self.policy.save(path=f".\_saved_model\{self._model_name}.pt")
+        self.policy.save(path=f"./_saved_model/{self._model_name}.pt")
 
     def learn(
         self: SelfPPO,

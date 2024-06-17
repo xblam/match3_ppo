@@ -1,3 +1,1 @@
-python training.py \
-        --n_steps 100 \
-        --lr 3e-3
+python training.py --prefix_name mac_with_tut --mid_channels 16 --num_first_cnn_layer 16 --n_steps 16384 --lr 0.00003 --wandb
