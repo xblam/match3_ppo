@@ -956,7 +956,8 @@ class AbstractMonster(ABC):
         self.cause_dmg_mask = []
         if request_masked is not None and len(request_masked) == 5:
             self.available_mask = request_masked
-        self.available_mask = [1, 1, 1, 1, 1]  # left, right, top, down, inside
+        else:
+            self.available_mask = [1, 1, 1, 1, 1]  # left, right, top, down, inside
 
     @property
     def dmg_mask(self):
