@@ -130,58 +130,46 @@ class Match3Levels:
         return pad
     
 easy_levels = []
-for i in range(10):
-    x = random.randint(0, 8)
-    y = random.randint(0, 7)
+for x in range(0, 8):
+    for y in range(0, 7):
+        easy_board = [[0 for _ in range(9)] for _ in range(10)]
+        for _x in range(x, x + 2):
+            for _y in range(y, y + 2):
+                easy_board[_x][_y] = GameObject.monster_dame
 
-    easy_board = [[0 for _ in range(9)] for _ in range(10)]
-    for _x in range(x, x + 2):
-        for _y in range(y, y + 2):
-            easy_board[_x][_y] = GameObject.monster_dame
-
-    easy_levels.append(
-        Level(10, 9, 5, copy.deepcopy(easy_board), [
-            DameMonster(
-                position=Point(x, y),
-                width=2,
-                height=2,
-                hp=25,
-                request_masked=[1, 1, 1, 1, 0]
-            )])
-    )
-    easy_levels.append(
-        Level(10, 9, 5, copy.deepcopy(easy_board), [
-            DameMonster(
-                position=Point(x, y),
-                width=2,
-                height=2,
-                hp=25,
-                request_masked=[0, 0, 0, 0, 1]
-            )])
-    )
+        easy_levels.append(
+            Level(10, 9, 5, copy.deepcopy(easy_board), [
+                DameMonster(
+                    position=Point(x, y),
+                    width=2,
+                    height=2,
+                    hp=35,
+                )])
+        )
+        easy_levels.append(
+            Level(10, 9, 5, copy.deepcopy(easy_board), [
+                DameMonster(
+                    position=Point(x, y),
+                    width=2,
+                    height=2,
+                    hp=25,
+                    request_masked=[1, 1, 1, 1, 0]
+                )])
+        )
+        easy_levels.append(
+            Level(10, 9, 5, copy.deepcopy(easy_board), [
+                DameMonster(
+                    position=Point(x, y),
+                    width=2,
+                    height=2,
+                    hp=25,
+                    request_masked=[0, 0, 0, 0, 1]
+                )])
+        )
 
 
 LEVELS = [   
     *easy_levels,
-
-    Level(10, 9, 5, [
-        [0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, GameObject.monster_dame, GameObject.monster_dame, 0],
-        [0, 0, 0, 0, 0, 0, GameObject.monster_dame, GameObject.monster_dame, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0],
-    ], [
-        DameMonster(position=Point(6, 6),
-                    width=2,
-                    height=2,
-                    hp=40,
-                    )
-    ]),
 
     Level(10, 9, 5, [
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -247,25 +235,6 @@ LEVELS = [
                     hp=30,
                     dame=2,
                     have_paper_box=True
-                    )
-    ]),
-
-    Level(10, 9, 5, [
-        [0, 0, 0, -1, 0, 0, 0, 0, 0],
-        [0, 0, 0, -1, 0, 0, 0, 0, 0],
-        [0, 0, 0, -1, 0, 0, 0, 0, 0],
-        [0, 0, 0, -1, 0, 0, 0, 0, 0],
-        [0, 0, 0, -1, GameObject.monster_dame, GameObject.monster_dame, 0, 0, 0],
-        [0, 0, 0, -1, GameObject.monster_dame, GameObject.monster_dame, 0, 0, 0],
-        [0, 0, 0, -1, 0, 0, 0, 0, 0],
-        [0, 0, 0, -1, 0, 0, 0, 0, 0],
-        [0, 0, 0, -1, 0, 0, 0, 0, 0],
-        [0, 0, 0, -1, 0, 0, 0, 0, 0],
-    ], [
-        DameMonster(position=Point(4, 4),
-                    width=2,
-                    height=2,
-                    hp=35
                     )
     ]),
 
