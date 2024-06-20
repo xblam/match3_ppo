@@ -1,1 +1,1 @@
-python training.py --prefix_name mac_with_tut --mid_channels 16 --num_first_cnn_layer 16 --n_steps 16384 --lr 0.00003 --wandb
+python training.py --prefix_name detail_tut_w_256_180_180pi --mid_channels 16 --num_first_cnn_layer 16 --n_steps 16384 --lr 0.00003 --wandb

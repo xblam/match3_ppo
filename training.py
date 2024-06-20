@@ -84,7 +84,7 @@ PPO_trainer = PPO(
     n_steps=args.n_steps,
     ent_coef=0.00001,
     policy_kwargs={
-        "net_arch": dict(pi=[], vf=[161, 32]),
+        "net_arch": dict(pi=[256, 180, 180], vf=[161, 32]),
         "features_extractor_class": M3CnnFeatureExtractor,
         "features_extractor_kwargs": {
             "mid_channels": args.mid_channels,
@@ -92,7 +92,7 @@ PPO_trainer = PPO(
             "num_first_cnn_layer": args.num_first_cnn_layer,
         },
         "optimizer_class": torch.optim.Adam,
-        "share_features_extractor": True,
+        "share_features_extractor": False,
     },
     _checkpoint=args.checkpoint,
     _wandb=args.wandb,
