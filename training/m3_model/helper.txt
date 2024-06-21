@@ -8,12 +8,14 @@ input:
     vị trí khu vực làm quái mất máu + bomb
     vị trí khu vực làm mình mất máu (gai + quái timing)
     vị trí các hạt match được (các màu match thì gây dmg)
+    vị trí các chỗ con quái mà PU bắn được
     vị trí các hạt không match được (các màu match thì không gây dmg)
     vị trí các kiểu match tạo power up (5)
 reward:
-    + số hạt match được gây dmg lên quái
+    + số dmg gây lên quái * 1
     + số hạt puff ăn được đến lúc này
     + số power up được tạo ra ở lần match này * 0.1
+    + số hạt bị bễ * 0.1 (>= 4)
     (- số hạt puff ngu ăn được đến lúc này)
     - phần trăm máu mình bị mất
     - số ô có effect gây mất máu lên quái hoặc bomb nếu action đó không gây dmg lên quái hoặc bomb
