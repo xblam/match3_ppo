@@ -1,1 +1,1 @@
-python training.py --prefix_name detail_tut_w_256_180_180pi --mid_channels 16 --num_first_cnn_layer 16 --n_steps 16384 --lr 0.00003 --wandb
+python training.py --prefix_name detail_tut_w_256_180_180pi --checkpoint ./_saved_model/detail_tut_w_256pi_16layers_16channels_3e-05_16384_share_20240617.pt --pi 256 --vf 161 32 --mid_channels 16 --num_first_cnn_layer 16 --n_steps 16384 --lr 0.00003 --wandb
