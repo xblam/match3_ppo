@@ -4,7 +4,7 @@ import torch
 from gym_match3.envs.match3_env import Match3Env
 from gym_match3.envs.levels import Match3Levels, LEVELS
 from training.ppo import PPO
-from training.m3_model.m3_cnn import M3CnnFeatureExtractor
+from training.m3_model.m3_cnn import M3CnnFeatureExtractor, M3CnnLargerFeatureExtractor
 
 
 def get_args():
@@ -97,7 +97,7 @@ PPO_trainer = PPO(
     ent_coef=0.00001,
     policy_kwargs={
         "net_arch": dict(pi=args.pi, vf=args.vf),
-        "features_extractor_class": M3CnnFeatureExtractor,
+        "features_extractor_class": M3CnnLargerFeatureExtractor,
         "features_extractor_kwargs": {
             "mid_channels": args.mid_channels,
             "out_channels": 161,

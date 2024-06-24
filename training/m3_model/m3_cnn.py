@@ -2,6 +2,7 @@ import torch
 from torch import nn
 from typing import Tuple, List, Dict, Union, Type
 
+
 class M3Aap(nn.AdaptiveMaxPool2d):
     def __init__(self, output_size: Union[int, Tuple[Union[int, None]], None]) -> None:
         super().__init__(output_size)
@@ -11,32 +12,49 @@ class M3Aap(nn.AdaptiveMaxPool2d):
         batch_size, data_size = c.shape[0], c.shape[1]
         return c.view((batch_size, data_size))
 
+
 # With square kernels and equal stride
 class M3CnnFeatureExtractor(nn.Module):
     """
-            Model architecture with CNN base.
-        
-            `Input`:
-            - in_chanels: size of input channels
-            - kwargs["mid_channels"]: size of mid channels
+    Model architecture with CNN base.
 
-            `Output`:
-            - `Tensor`: [batch, action_space_size]
-        """
-    def __init__(self, in_channels: int, 
-                 **kwargs) -> None:
-        #mid_channels: int, out_channels: int = 160, num_first_cnn_layer: int = 10, **kwargs
+    `Input`:
+    - in_chanels: size of input channels
+    - kwargs["mid_channels"]: size of mid channels
+
+    `Output`:
+    - `Tensor`: [batch, action_space_size]
+    """
+
+    def __init__(self, in_channels: int, **kwargs) -> None:
+        # mid_channels: int, out_channels: int = 160, num_first_cnn_layer: int = 10, **kwargs
         super(M3CnnFeatureExtractor, self).__init__()
-        
+
         layers = []
-        layers.append(nn.Conv2d(in_channels.shape[0], kwargs["mid_channels"], 3, stride=1, padding=1)) # (batch, mid_channels, (size))
+        layers.append(
+            nn.Conv2d(
+                in_channels.shape[0], kwargs["mid_channels"], 3, stride=1, padding=1
+            )
+        )  # (batch, mid_channels, (size))
         layers.append(nn.ReLU())
         for _ in range(kwargs["num_first_cnn_layer"]):
-            layers.append(nn.Conv2d(kwargs["mid_channels"], kwargs["mid_channels"], 3, stride=1, padding=1)) # (batch, mid_channels, (size))
+            layers.append(
+                nn.Conv2d(
+                    kwargs["mid_channels"],
+                    kwargs["mid_channels"],
+                    3,
+                    stride=1,
+                    padding=1,
+                )
+            )  # (batch, mid_channels, (size))
             layers.append(nn.ReLU())
-        layers.append(nn.Conv2d(kwargs["mid_channels"], kwargs["out_channels"], 3, stride=1, padding=1)) # (batch, out_channels, (size))
+        layers.append(
+            nn.Conv2d(
+                kwargs["mid_channels"], kwargs["out_channels"], 3, stride=1, padding=1
+            )
+        )  # (batch, out_channels, (size))
         layers.append(nn.ReLU())
-        layers.append(M3Aap((1))) # (batch, out_channels)
+        layers.append(M3Aap((1)))  # (batch, out_channels)
 
         self.net = nn.Sequential(*layers)
         self.features_dim = kwargs["out_channels"]
@@ -48,7 +66,65 @@ class M3CnnFeatureExtractor(nn.Module):
             input = torch.unsqueeze(input, 0)
         x = self.net(input)
         return x
-    
+
+
+# With square kernels and equal stride
+class M3CnnLargerFeatureExtractor(nn.Module):
+    """
+    Model architecture with CNN base.
+
+    `Input`:
+    - in_chanels: size of input channels
+    - kwargs["mid_channels"]: size of mid channels
+
+    `Output`:
+    - `Tensor`: [batch, action_space_size]
+    """
+
+    def __init__(self, in_channels: int, **kwargs) -> None:
+        # mid_channels: int, out_channels: int = 160, num_first_cnn_layer: int = 10, **kwargs
+        super(M3CnnLargerFeatureExtractor, self).__init__()
+
+        target_pooling_shape = tuple(kwargs.get("target_pooling_shape", [7, 6]))
+
+        layers = []
+        layers.append(
+            nn.Conv2d(
+                in_channels.shape[0], kwargs["mid_channels"], 3, stride=1, padding=1
+            )
+        )  # (batch, mid_channels, (size))
+        layers.append(nn.ReLU())
+        for _ in range(kwargs["num_first_cnn_layer"]):
+            layers.append(
+                nn.Conv2d(
+                    kwargs["mid_channels"],
+                    kwargs["mid_channels"],
+                    3,
+                    stride=1,
+                    padding=1,
+                )
+            )  # (batch, mid_channels, (size))
+            layers.append(nn.ReLU())
+        layers.append(
+            nn.Conv2d(
+                kwargs["mid_channels"], kwargs["out_channels"], 3, stride=1, padding=1
+            )
+        )  # (batch, out_channels, (size))
+        layers.append(nn.ReLU())
+        layers.append(M3Aap(target_pooling_shape))  # (batch, out_channels)
+        layers.append(nn.Flatten(1, -1))
+
+        self.net = nn.Sequential(*layers)
+        self.features_dim = kwargs["out_channels"] * target_pooling_shape[0] * (target_pooling_shape[1] if len(target_pooling_shape) == 2 else 1)
+        # self.linear = nn.Sequential(nn.Linear(self.features_dim, self.features_dim), nn.ReLU())
+
+    def forward(self, input: torch.Tensor):
+        if len(input.shape) == 3:
+            input = torch.unsqueeze(input, 0)
+        x = self.net(input)
+        return x
+
+
 class M3MlpExtractor(nn.Module):
     """
     Constructs an MLP that receives the output from a previous features extractor (i.e. a CNN) or directly

@@ -152,7 +152,7 @@ for x in range(0, 8):
                     position=Point(x, y),
                     width=2,
                     height=2,
-                    hp=25,
+                    hp=35,
                     request_masked=[1, 1, 1, 1, 0]
                 )])
         )
@@ -162,7 +162,7 @@ for x in range(0, 8):
                     position=Point(x, y),
                     width=2,
                     height=2,
-                    hp=25,
+                    hp=40,
                     request_masked=[0, 0, 0, 0, 1]
                 )])
         )
@@ -184,7 +184,7 @@ LEVELS = [
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
     ], [
         DameMonster(position=Point(6, 6),
-                    relax_interval = 3,
+                    relax_interval = 2,
                     setup_interval = 1,
                     width=2,
                     height=2,
@@ -207,6 +207,8 @@ LEVELS = [
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
     ], [
         DameMonster(position=Point(6, 6),
+                    relax_interval = 2,
+                    setup_interval = 1,
                     width=2,
                     height=2,
                     hp=35,
@@ -228,7 +230,7 @@ LEVELS = [
         [0, 0, 0, 0, 0, 0, 0, -1, -1],
     ], [
         DameMonster(position=Point(4, 4),
-                    relax_interval = 4,
+                    relax_interval = 2,
                     setup_interval = 1,
                     width=2,
                     height=2,
@@ -251,7 +253,7 @@ LEVELS = [
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
     ], [
         DameMonster(position=Point(0, 0),
-                    relax_interval = 4,
+                    relax_interval = 3,
                     setup_interval = 1,
                     width=2,
                     height=2,
@@ -422,7 +424,7 @@ LEVELS = [
                    hp=20
                    ),
         DameMonster(position=Point(4, 6),
-                    relax_interval = 4,
+                    relax_interval = 2,
                     setup_interval = 1,
                     width=2,
                     height=2,
