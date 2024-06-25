@@ -1327,7 +1327,9 @@ class Game(AbstractGame):
             return {
                 "score": 0,
                 "cancel_score": 0,
-                "damage_on_monster": 0,
+                "create_pu_score": 0,
+                "match_damage_on_monster": 0,
+                "power_damage_on_monster": 0,
                 "damage_on_user": 0,
             }
 

@@ -10,7 +10,7 @@ class M3Aap(nn.AdaptiveMaxPool2d):
     def forward(self, input: torch.Tensor) -> torch.Tensor:
         c = super().forward(input)
         batch_size, data_size = c.shape[0], c.shape[1]
-        return c.view((batch_size, data_size))
+        return c.view((batch_size, -1))
 
 
 # With square kernels and equal stride
