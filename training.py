@@ -12,6 +12,7 @@ def get_args():
         "BEiT fine-tuning and evaluation script for image classification",
         add_help=False,
     )
+
     # Model Information
     parser.add_argument(
         "--pi", 
@@ -64,6 +65,15 @@ def get_args():
     parser.add_argument("--batch_size", default=128, type=int)
     parser.add_argument("--epochs", default=20, type=int)
 
+    # Reward Config
+    parser.add_argument(
+        "--gamma",
+        type=float,
+        default=0.90,
+        metavar="gamma",
+        help="Gamma in Reinforcement Learning",
+    )
+
     # Continue training
     parser.add_argument(
         "--checkpoint",
@@ -94,6 +104,7 @@ PPO_trainer = PPO(
     env=env,
     learning_rate=args.lr,
     n_steps=args.n_steps,
+    gamma=args.gamma,
     ent_coef=0.00001,
     policy_kwargs={
         "net_arch": dict(pi=args.pi, vf=args.vf),

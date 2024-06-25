@@ -272,15 +272,28 @@ class RolloutBuffer(BaseBuffer):
         self.returns = self.advantages + self.values
 
     def compute_rewards(self, reward: dict) -> int:
+        """
+            "score": score,
+            "cancel_score": cancel_score,
+            "create_pu_score": create_pu_score,
+            "match_damage_on_monster": total_match_dmg,
+            "power_damage_on_monster": total_power_dmg,
+            "damage_on_user": self_dmg,
+        """
+
+        total_dmg = reward["match_damage_on_monster"] + reward["power_damage_on_monster"]
+
         _reward = (
-            reward["score"] * (0.1 if reward["score"] > 3 else 0)
+            reward["match_damage_on_monster"] * 1
+            + reward["power_damage_on_monster"] * 1.5
+            + reward["create_pu_score"]
             + reward["cancel_score"]
-            + reward["damage_on_monster"]
+            - reward["score"] * (0.1 if (reward["score"] > 6 and total_dmg == 0) else 0)
             - reward["damage_on_user"]
             + reward.get("game", 0)
         )
-        target_min, target_max = -25, 18
-        reward_min, reward_max = -100, 70
+        target_min, target_max = -25, 19
+        reward_min, reward_max = -100, 75
         new_reward = (_reward - reward_min) / (reward_max - reward_min) * (
             target_max - target_min
         ) + target_min

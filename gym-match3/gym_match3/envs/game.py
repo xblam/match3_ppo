@@ -1335,6 +1335,9 @@ class Game(AbstractGame):
     def __move(self, point: Point, direction: Point):
         score = 0
         cancel_score = 0
+        create_pu_score = 0
+        total_match_dmg = 0
+        total_power_dmg = 0
         dmg = 0
         self_dmg = 0
 
@@ -1348,7 +1351,8 @@ class Game(AbstractGame):
 
         for i in range(len(self.list_monsters)):
             match_damage, pu_damage = self.list_monsters[i].get_dame(matches, brokens, disco_brokens)
-            dmg += match_damage + pu_damage
+            total_match_dmg += match_damage
+            total_power_dmg += pu_damage
             score -= pu_damage
 
             self.list_monsters[i].attacked(match_damage, pu_damage)
@@ -1384,18 +1388,25 @@ class Game(AbstractGame):
             ### Handle add power up
             for _point, _shape in new_power_ups.items():
                 self.board.put_shape(_point, _shape)
+                if _shape == GameObject.power_missile_h or _shape == GameObject.power_missile_v:
+                    create_pu_score += 1
+                elif _shape == GameObject.power_plane:
+                    create_pu_score += 1.5
+                elif _shape == GameObject.power_bomb:
+                    create_pu_score += 2.5
+                elif _shape == GameObject.power_disco:
+                    create_pu_score += 4.5
             ###
             self.__filler.move_and_fill(self.board)
             self.__operate_until_possible_moves()
 
         # print("refill", time.time() - s_t)
-        if dmg > 0:
-            self.hit_rate += 1
-            self.hit_dame += dmg
         reward = {
             "score": score,
             "cancel_score": cancel_score,
-            "damage_on_monster": dmg,
+            "create_pu_score": create_pu_score,
+            "match_damage_on_monster": total_match_dmg,
+            "power_damage_on_monster": total_power_dmg,
             "damage_on_user": self_dmg,
         }
         return reward
