@@ -12,10 +12,15 @@ input:
     vị trí các hạt không match được (các màu match thì không gây dmg)
     vị trí các kiểu match tạo power up (5)
 reward:
-    + số dmg gây lên quái * 1
-    + số hạt puff ăn được đến lúc này
-    + số power up được tạo ra ở lần match này * 0.1
-    + số hạt bị bễ * 0.1 (>= 4)
-    (- số hạt puff ngu ăn được đến lúc này)
-    - phần trăm máu mình bị mất
+    + số dmg gây lên quái bằng hạt * 1
+    + số dmg gây lên quái bằng PU * 1.3
+    
+    + số power up disco * 4.5
+    + số power up bomb * 2.5
+    + số power up máy bay * 1.5
+    + số power up tên lửa * 1
+
+    - số hạt bị bể nếu trong lần match đó không gây dmg lên quái * 0.1 (total hạt bể > 6)
+
+    - số máu bị mất (tính theo hạt)
     - số ô có effect gây mất máu lên quái hoặc bomb nếu action đó không gây dmg lên quái hoặc bomb
