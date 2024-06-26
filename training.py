@@ -1,4 +1,5 @@
 import argparse
+import time
 import torch
 
 from gym_match3.envs.match3_env import Match3Env
@@ -122,10 +123,9 @@ PPO_trainer = PPO(
     device="cuda",
     prefix_name=args.prefix_name,
 )
-
-while True:
-    import time
-
+run_i = 0
+while run_i < 300:
+    run_i += 1
     s_t = time.time()
     PPO_trainer.collect_rollouts(
         PPO_trainer.env, PPO_trainer.rollout_buffer, PPO_trainer.n_steps

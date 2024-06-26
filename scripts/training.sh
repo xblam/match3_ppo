@@ -1,1 +1,1 @@
-python training.py --prefix_name new_reward_tut_w_256_180_180pi --pi 256 180 180 --vf 161 32 --mid_channels 16 --num_first_cnn_layer 16 --n_steps 32768 --lr 0.00003
+CUDA_VISIBLE_DEVICES=1 python training.py --prefix_name small_create_pu_w_256_180_180pi --pi 256 180 180 --vf 161 32 --mid_channels 16 --num_first_cnn_layer 16 --n_steps 32768 --lr 0.00003 --wandb
