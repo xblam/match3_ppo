@@ -161,3 +161,4 @@ cython_debug/
 
 wandb/
 # _saved_model/*.pt
+/*.out

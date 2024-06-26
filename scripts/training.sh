@@ -1,1 +1,1 @@
-CUDA_VISIBLE_DEVICES=1 python training.py --prefix_name small_create_pu_w_256_180_180pi --pi 256 180 180 --vf 161 32 --mid_channels 16 --num_first_cnn_layer 16 --n_steps 32768 --lr 0.00003 --wandb
+CUDA_VISIBLE_DEVICES=0 python training.py --prefix_name large_punish_w_256_180_180_161pi_256_256_32vf_85gamma --pi 256 180 180 161 --vf 256 256 32 --mid_channels 32 --num_first_cnn_layer 10 --n_steps 32768 --lr 0.00001 --gamma 0.85 --wandb
