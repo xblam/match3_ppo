@@ -124,7 +124,7 @@ PPO_trainer = PPO(
     prefix_name=args.prefix_name,
 )
 run_i = 0
-while run_i < 1:
+while run_i < 300:
     run_i += 1
     s_t = time.time()
     PPO_trainer.collect_rollouts(

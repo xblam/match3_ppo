@@ -143,7 +143,7 @@ for x in range(0, 8):
                     position=Point(x, y),
                     width=2,
                     height=2,
-                    hp=35,
+                    hp=40,
                 )])
         )
         easy_levels.append(
@@ -152,7 +152,7 @@ for x in range(0, 8):
                     position=Point(x, y),
                     width=2,
                     height=2,
-                    hp=35,
+                    hp=random.randint(20, 25),
                     request_masked=[1, 1, 1, 1, 0]
                 )])
         )
