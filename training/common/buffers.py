@@ -270,6 +270,7 @@ class RolloutBuffer(BaseBuffer):
         # TD(lambda) estimator, see Github PR #375 or "Telescoping in TD(lambda)"
         # in David Silver Lecture 4: https://www.youtube.com/watch?v=PnHCvfgC_ZA
         self.returns = self.advantages + self.values
+        # print(self.returns)
 
     def compute_rewards(self, reward: dict) -> int:
         """
@@ -288,11 +289,11 @@ class RolloutBuffer(BaseBuffer):
             + reward["power_damage_on_monster"] * 1.5
             + reward["create_pu_score"]
             + reward["cancel_score"]
-            + reward["score"] * (-0.2 if (reward["score"] > 6 and total_dmg == 0) else 0.001)
+            + reward["score"] * (-0.2 if (reward["score"] > 6 and total_dmg == 0) else 0.01)
             - reward["damage_on_user"]
             + reward.get("game", 0)
         )
-        target_min, target_max = -25, 19
+        target_min, target_max = -30, 24
         reward_min, reward_max = -100, 75
         new_reward = (_reward - reward_min) / (reward_max - reward_min) * (
             target_max - target_min
