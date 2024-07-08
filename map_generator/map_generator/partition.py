@@ -69,6 +69,10 @@ class AbstractPartition(ABC):
     num_row = 10
     num_col = 9
 
+    @property
+    def points(self):
+        return set()
+
     @abstractmethod
     def __init__(self):
         pass
@@ -81,8 +85,16 @@ class AbstractPartition(ABC):
     def get_vertical_line(col: int):
         return set([Point(i, col) for i in range(AbstractPartition.num_row)])
 
+    def to_numpy_index(self):
+        _points = self.points
+        return np.array([i.get_coord() for i in _points]).T.tolist()
+
     @abstractmethod
     def __str__(self):
+        pass
+
+    @abstractmethod
+    def __eq__(self):
         pass
 
     def __repr__(self):
@@ -92,7 +104,7 @@ class AbstractPartition(ABC):
         return len(self.points)
 
 
-class PartitionTriangleVertical(AbstractPartition):
+class PartitionTriangle(AbstractPartition):
     def __init__(self, direction: str = "up"):
         super().__init__()
         self.__direction = direction
@@ -158,8 +170,11 @@ class PartitionTriangleVertical(AbstractPartition):
             col_idx -= 1
         return _points
 
+    def __eq__(self, another):
+        return self.__direction == another.__direction
+
     def __str__(self):
-        return "PartitionTriangleVertical"
+        return "PartitionTriangle"
 
     def __repr__(self):
         return self.__str__()
@@ -183,6 +198,9 @@ class PartitionBigX(AbstractPartition):
 
         return set(_points)
 
+    def __eq__(self, another):
+        return isinstance(another) == PartitionBigX
+
     def __str__(self):
         return "PartitionBigX"
 
@@ -203,8 +221,15 @@ class PartitionSquare(AbstractPartition):
         return set(
             [
                 self.start_point + Point(i, j)
-                for i, j in product(range(self.width), range(self.height))
+                for i, j in product(range(self.height), range(self.width))
             ]
+        )
+
+    def __eq__(self, another):
+        return (
+            self.start_point == another.start_point
+            and self.width == another.width
+            and self.height == another.height
         )
 
     def __str__(self):
@@ -228,14 +253,53 @@ class PartitionCenterPlus(AbstractPartition):
                 *self.get_vertical_line(4),
             ]
         )
+    
+    def __eq__(self, another):
+        return (isinstance(another) == PartitionCenterPlus)
 
     def __str__(self):
         return "PartitionCenterPlus"
+
 
 class AbstractScissor(ABC):
     def __init__(self) -> None:
         pass
 
-    def divide(self, div_type, *args):
-        if div_type == "square":
-            pass
+    @staticmethod
+    def divide(div_type, *args):
+        if div_type == "square5x5":
+            return [
+                PartitionSquare(Point(0, 0), 5, 5),
+                PartitionSquare(Point(5, 0), 4, 5),
+                PartitionSquare(Point(0, 5), 4, 5),
+                PartitionSquare(Point(5, 4), 5, 5),
+            ]
+        elif div_type == "bigX":
+            return [
+                PartitionBigX(),
+                PartitionTriangle("up"),
+                PartitionTriangle("down"),
+                PartitionTriangle("left"),
+                PartitionTriangle("right"),
+            ]
+        elif div_type == "centerPlus":
+            return [
+                PartitionCenterPlus(),
+                PartitionSquare(Point(0, 0), 4, 4),
+                PartitionSquare(Point(6, 0), 4, 4),
+                PartitionSquare(Point(0, 5), 4, 4),
+                PartitionSquare(Point(6, 5), 4, 4),
+            ]
+        elif div_type == "square4x4":
+            return [
+                PartitionSquare(Point(0, 0), 4, 6),
+                PartitionSquare(Point(6, 0), 4, 4),
+                PartitionSquare(Point(0, 4), 5, 6),
+                PartitionSquare(Point(6, 4), 5, 4),
+            ]
+        else:
+            raise ValueError(f"Do not support div_type = {div_type}")
+
+
+class Scissor(AbstractScissor):
+    pass
