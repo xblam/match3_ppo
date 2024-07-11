@@ -14,29 +14,30 @@ class M3Helper:
             self.num_col - 1
         )
         self.obs_order = [
-            "none_tile",
-            "color_1",
-            "color_2",
-            "color_3",
-            "color_4",
-            "color_5",
-            "disco",
-            "bomb",
-            "missile_h",
-            "missile_v",
-            "plane",
+            # "none_tile",
+            # "color_1",
+            # "color_2",
+            # "color_3",
+            # "color_4",
+            # "color_5",
+            # "disco",
+            # "bomb",
+            # "missile_h",
+            # "missile_v",
+            # "plane",
+            "pu",
             "blocker",
             "monster",
             "monster_match_dmg_mask",
             "monster_inside_dmg_mask",
             "self_dmg_mask",
-            # "match_normal",
-            # "match_2x2",
-            # "match_4_v",
-            # "match_4_h",
-            # "match_L",
-            # "match_T",
-            # "match_5",
+            "match_normal",
+            "match_2x2",
+            "match_4_v",
+            "match_4_h",
+            "match_L",
+            "match_T",
+            "match_5",
             "legal_action",
         ]
 
@@ -514,6 +515,11 @@ class M3Helper:
             # "buff": (board == GameObject.power_disco) \
             #         | (board == GameObject.power_disco) \
             #         | (board == GameObject.power_disco),
+            "pu": (board == GameObject.power_disco) * 4.5 \
+                    + (board == GameObject.power_bomb) * 2.5 \
+                    + (board == GameObject.power_missile_h) * 1 \
+                    + (board == GameObject.power_missile_v) * 1 \
+                    + (board == GameObject.power_plane) * 1.5,
             "blocker": (board == GameObject.blocker_box),
             "monster": (board == GameObject.monster_dame)
             | (board == GameObject.monster_box_box)
