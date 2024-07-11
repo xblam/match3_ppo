@@ -85,7 +85,8 @@ class M3CnnLargerFeatureExtractor(nn.Module):
         # mid_channels: int, out_channels: int = 160, num_first_cnn_layer: int = 10, **kwargs
         super(M3CnnLargerFeatureExtractor, self).__init__()
 
-        target_pooling_shape = tuple(kwargs.get("target_pooling_shape", [7, 6]))
+        target_pooling_shape = tuple(kwargs.get("target_pooling_shape", [5, 4]))
+        # target_pooling_shape = tuple(kwargs.get("target_pooling_shape", [7, 6]))
 
         layers = []
         layers.append(
