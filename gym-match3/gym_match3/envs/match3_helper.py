@@ -7,39 +7,43 @@ from gym_match3.envs.game import AbstractMonster, ThornyBlocker
 
 
 class M3Helper:
-    def __init__(self, num_row: int = 10, num_col: int = 9) -> None:
+    def __init__(self, num_row: int = 10, num_col: int = 9, obs_order: list[str] = None) -> None:
         self.num_row = num_row
         self.num_col = num_col
         self.num_action = (self.num_row - 1) * self.num_col + self.num_row * (
             self.num_col - 1
         )
-        self.obs_order = [
-            # "none_tile",
-            # "color_1",
-            # "color_2",
-            # "color_3",
-            # "color_4",
-            # "color_5",
-            # "disco",
-            # "bomb",
-            # "missile_h",
-            # "missile_v",
-            # "plane",
-            "pu",
-            "blocker",
-            "monster",
-            "monster_match_dmg_mask",
-            "monster_inside_dmg_mask",
-            "self_dmg_mask",
-            "match_normal",
-            "match_2x2",
-            "match_4_v",
-            "match_4_h",
-            "match_L",
-            "match_T",
-            "match_5",
-            "legal_action",
-        ]
+        if obs_order is None:
+            self.obs_order = [
+                # "none_tile",
+                # "color_1",
+                # "color_2",
+                # "color_3",
+                # "color_4",
+                # "color_5",
+                # "disco",
+                # "bomb",
+                # "missile_h",
+                # "missile_v",
+                # "plane",
+                "pu",
+                "blocker",
+                "monster",
+                "monster_match_dmg_mask",
+                "monster_inside_dmg_mask",
+                "self_dmg_mask",
+                "match_normal",
+                "match_2x2",
+                "match_4_v",
+                "match_4_h",
+                "match_L",
+                "match_T",
+                "match_5",
+                "legal_action",
+                "heat_mask",
+            ]
+        else:
+            self.obs_order = obs_order
 
     def _from_action_to_tile(self):
         a2t = {}
@@ -517,7 +521,7 @@ class M3Helper:
             #         | (board == GameObject.power_disco),
             "pu": (board == GameObject.power_disco) * 4.5 \
                     + (board == GameObject.power_bomb) * 2.5 \
-                    + (board == GameObject.power_missile_h) * 1 \
+                    + (board == GameObject.power_missile_h) * 0.9 \
                     + (board == GameObject.power_missile_v) * 1 \
                     + (board == GameObject.power_plane) * 1.5,
             "blocker": (board == GameObject.blocker_box),
@@ -539,6 +543,7 @@ class M3Helper:
             "match_T": np.zeros((self.num_row, self.num_col)),
             "match_5": np.zeros((self.num_row, self.num_col)),
             "legal_action": np.zeros((self.num_row, self.num_col)),
+            "heat_mask" : np.zeros((self.num_row, self.num_col)),
         }
 
         for _mons in list_monsters:

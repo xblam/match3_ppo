@@ -13,14 +13,14 @@ input:
     vị trí các kiểu match tạo power up (5)
 reward:
     + số dmg gây lên quái bằng hạt * 1
-    + số dmg gây lên quái bằng PU * 1.3
+    + số dmg gây lên quái bằng PU * 1.5
     
     + số power up disco * 4.5
     + số power up bomb * 2.5
     + số power up máy bay * 1.5
     + số power up tên lửa * 1
 
-    - số hạt bị bể nếu trong lần match đó không gây dmg lên quái * 0.1 (total hạt bể > 6)
+    - số hạt bị bể nếu trong lần match đó không gây dmg lên quái * 0.2 (total hạt bể > 6) 
+        + có gây dmg lên quái * 0.001
 
     - số máu bị mất (tính theo hạt)
-    - số ô có effect gây mất máu lên quái hoặc bomb nếu action đó không gây dmg lên quái hoặc bomb
