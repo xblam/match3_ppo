@@ -7,13 +7,13 @@ from gym_match3.envs.game import AbstractMonster, ThornyBlocker
 
 
 class M3Helper:
-    def __init__(self, num_row: int = 10, num_col: int = 9, obs_order: list[str] = None) -> None:
+    def __init__(self, num_row: int = 10, num_col: int = 9, obs_order: list[str] = []) -> None:
         self.num_row = num_row
         self.num_col = num_col
         self.num_action = (self.num_row - 1) * self.num_col + self.num_row * (
             self.num_col - 1
         )
-        if obs_order is None:
+        if not obs_order:
             self.obs_order = [
                 # "none_tile",
                 # "color_1",
@@ -503,6 +503,9 @@ class M3Helper:
         if not device == "cpu":
             device = "cuda:" + str(device)
 
+        start_value, end_value = 1, 1.2
+        increment = (end_value - start_value) / (self.num_row - 1)
+
         action_space = np.zeros((self.num_action))
         obs = {
             "none_tile": (board == GameObject.immovable_shape),
@@ -543,7 +546,7 @@ class M3Helper:
             "match_T": np.zeros((self.num_row, self.num_col)),
             "match_5": np.zeros((self.num_row, self.num_col)),
             "legal_action": np.zeros((self.num_row, self.num_col)),
-            "heat_mask" : np.zeros((self.num_row, self.num_col)),
+            "heat_mask" : np.array([[start_value + row * increment for _ in range(self.num_col)] for row in range(self.num_row)]),
         }
 
         for _mons in list_monsters:
