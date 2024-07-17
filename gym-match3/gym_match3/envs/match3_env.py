@@ -23,14 +23,14 @@ class Match3Env(gym.Env):
     result_step = 0
 
     def __init__(
-        self, rollout_len=100, all_moves=False, levels=None, random_state=None
+        self, rollout_len=100, all_moves=False, levels=None, random_state=None, obs_order:list[str] = []
     ):
         self.num_envs = 1
         self.rollout_len = rollout_len
         self.random_state = random_state
         self.all_moves = all_moves
         self.levels = levels or Match3Levels(LEVELS)
-        self.helper = M3Helper(10, 9)
+        self.helper = M3Helper(10, 9, obs_order)
         self.h = self.levels.h
         self.w = self.levels.w
         self.n_shapes = self.levels.n_shapes
