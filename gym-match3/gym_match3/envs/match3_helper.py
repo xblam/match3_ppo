@@ -550,6 +550,31 @@ class M3Helper:
         }
 
         for _mons in list_monsters:
+            _radius = 0
+            _mons_point_x, _mons_point_y = _mons._position.get_coord()
+            _cur_heat = 1.2
+            for i in range(2):
+                for _w in range(_radius, _mons._width - _radius, 1):
+                    for _h in range(_radius, _mons._height - _radius, 1):
+                        if _mons_point_x + _w >= 0 and _mons_point_x + _w < self.num_col:
+                            if _mons_point_y + _radius >= 0:
+                                obs["heat_mask"][_mons_point_x + _w][_mons_point_y + _radius] = _cur_heat
+                            if _mons_point_y + _mons._height - _radius <= self.num_row:
+                                obs["heat_mask"][_mons_point_x + _w][_mons_point_y + _mons._height - _radius - 1] = _cur_heat
+                        if _mons_point_y + _h >= 0 and _mons_point_y + _h < self.num_row:
+                            if _mons_point_x + _radius >= 0:
+                                obs["heat_mask"][_mons_point_x + _radius][_mons_point_y + _h] = _cur_heat
+                            if _mons_point_x + _mons._width - _radius <= self.num_col:
+                                obs["heat_mask"][_mons_point_x + _mons._width - _radius - 1][_mons_point_y + _h] = _cur_heat
+
+
+
+                _radius -= 1
+                _cur_heat -= 0.1 * _cur_heat
+
+        print(obs["heat_mask"])
+
+        for _mons in list_monsters:
             if isinstance(_mons, ThornyBlocker):
                 for p in _mons.inside_dmg_mask:
                     try:
