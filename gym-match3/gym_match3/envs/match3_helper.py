@@ -546,7 +546,12 @@ class M3Helper:
             "match_T": np.zeros((self.num_row, self.num_col)),
             "match_5": np.zeros((self.num_row, self.num_col)),
             "legal_action": np.zeros((self.num_row, self.num_col)),
-            "heat_mask" : np.array([[start_value + row * increment for _ in range(self.num_col)] for row in range(self.num_row)]),
+            "heat_mask" : np.array(
+                [
+                    [start_value + row * increment for _ in range(self.num_col)] 
+                    for row in range(self.num_row)
+                ]
+            ),
         }
 
         for _mons in list_monsters:
@@ -559,20 +564,16 @@ class M3Helper:
                         if _mons_point_x + _w >= 0 and _mons_point_x + _w < self.num_col:
                             if _mons_point_y + _radius >= 0:
                                 obs["heat_mask"][_mons_point_x + _w][_mons_point_y + _radius] = _cur_heat
-                            if _mons_point_y + _mons._height - _radius <= self.num_row:
+                            if _mons_point_y + _mons._height - _radius < self.num_row:
                                 obs["heat_mask"][_mons_point_x + _w][_mons_point_y + _mons._height - _radius - 1] = _cur_heat
                         if _mons_point_y + _h >= 0 and _mons_point_y + _h < self.num_row:
                             if _mons_point_x + _radius >= 0:
                                 obs["heat_mask"][_mons_point_x + _radius][_mons_point_y + _h] = _cur_heat
-                            if _mons_point_x + _mons._width - _radius <= self.num_col:
+                            if _mons_point_x + _mons._width - _radius < self.num_col:
                                 obs["heat_mask"][_mons_point_x + _mons._width - _radius - 1][_mons_point_y + _h] = _cur_heat
-
-
 
                 _radius -= 1
                 _cur_heat -= 0.1 * _cur_heat
-
-        print(obs["heat_mask"])
 
         for _mons in list_monsters:
             if isinstance(_mons, ThornyBlocker):

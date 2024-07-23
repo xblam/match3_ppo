@@ -130,8 +130,8 @@ class Match3Levels:
         return pad
     
 easy_levels = []
-for x in range(0, 8):
-    for y in range(0, 7):
+for x in range(0, 9):
+    for y in range(0, 8):
         easy_board = [[0 for _ in range(9)] for _ in range(10)]
         for _x in range(x, x + 2):
             for _y in range(y, y + 2):
