@@ -16,14 +16,14 @@ def get_args():
 
     # Model Information
     parser.add_argument(
-        "--pi", 
-        type=int, 
+        "--pi",
+        type=int,
         nargs="+",
         help="The linear layer size of the Policy Model",
     )
     parser.add_argument(
-        "--vf", 
-        type=int, 
+        "--vf",
+        type=int,
         nargs="+",
         help="The linear layer size of the Value Function",
     )
@@ -127,10 +127,14 @@ run_i = 0
 while run_i < 300:
     run_i += 1
     s_t = time.time()
-    PPO_trainer.collect_rollouts(
+    _, num_completed_games, num_win_games = PPO_trainer.collect_rollouts(
         PPO_trainer.env, PPO_trainer.rollout_buffer, PPO_trainer.n_steps
     )
-    print("collect data", time.time() - s_t)
+    win_rate = num_win_games / num_completed_games * 100
+    print(f"collect data: {time.time() - s_t}\nwin rate: {win_rate}")
     s_t = time.time()
-    PPO_trainer.train()
+    PPO_trainer.train(
+        num_completed_games=num_completed_games, num_win_games=num_win_games
+    )
+    
     print("training time", time.time() - s_t)
