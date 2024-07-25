@@ -575,8 +575,6 @@ class M3Helper:
                 _radius -= 1
                 _cur_heat -= 0.1 * _cur_heat
 
-        print(obs["heat_mask"])
-
         for _mons in list_monsters:
             if isinstance(_mons, ThornyBlocker):
                 for p in _mons.inside_dmg_mask:
