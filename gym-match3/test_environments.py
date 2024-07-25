@@ -25,6 +25,8 @@ while not dones:
         print(obs.shape)
         print("Reward of this action:", reward)
 
+        action_space = infos["action_space"]
+
     else:
         print("No indices with value 1 found.")
         dones = True

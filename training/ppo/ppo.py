@@ -216,10 +216,13 @@ class PPO(OnPolicyAlgorithm):
             wandb.log(stats)
         pass
 
-    def train(self) -> None:
+    def train(self, **kwargs) -> None:
         """
         Update policy using the currently gathered rollout buffer.
         """
+        num_completed_games = kwargs["num_completed_games"]
+        num_win_games = kwargs["num_win_games"]
+
         # Switch to train mode (this affects batch norm / dropout)
         self.policy.set_training_mode(True)
         # Compute current clip range
@@ -362,7 +365,10 @@ class PPO(OnPolicyAlgorithm):
             "Reward/advantages":np.mean(mean_advantage),
             "Reward/returns":np.mean(mean_returns),
             "Reward/values":np.mean(mean_values),
-            "Reward/rewards":np.mean(mean_rewards)
+            "Reward/rewards":np.mean(mean_rewards),
+
+            "Stats/Win rates": num_win_games / num_completed_games,
+            "Stats/Avg steps": self.n_steps / num_completed_games
         }
         # if hasattr(self._policy, "log_std"):
         #     stats["train/std"]=th.exp(self._policy.log_std).mean().item(),

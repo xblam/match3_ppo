@@ -160,6 +160,10 @@ class OnPolicyAlgorithm(BaseAlgorithm):
         # Switch to eval mode (this affects batch norm / dropout)
         self.policy.set_training_mode(False)
 
+        # Some stats about the play ability in current epoch.
+        __num_completed_games = 0
+        __num_win_games = 0
+
         n_steps = 0
         rollout_buffer.reset()
         self._last_obs, infos = env.reset()
@@ -207,6 +211,11 @@ class OnPolicyAlgorithm(BaseAlgorithm):
 
             new_obs, rewards, dones, infos = env.step(clipped_actions)
             print(rewards)
+
+            if "game" in rewards.keys():
+                __num_completed_games += 1
+                __num_win_games += 0 if rewards["game"] < 0 else 1
+
             action_space = infos["action_space"]
 
             self.num_timesteps += env.num_envs
@@ -251,7 +260,7 @@ class OnPolicyAlgorithm(BaseAlgorithm):
 
         print("End rollout data")
 
-        return True
+        return True, __num_completed_games, __num_win_games
 
     def train(self) -> None:
         """
