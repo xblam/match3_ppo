@@ -603,11 +603,11 @@ class M3Helper:
                     for i in [-1, 1]:
                         if self.check_legal_pos_to_move(r, c + i, board):
                             obs["legal_action"][r][c] = 1
-                            obs["legal_action"][r][c + min(i, 0)] = 1
+                            obs["legal_action"][r][c + i] = 1
                             action_space[(self.num_col - 1) * r + (c + min(i, 0))] = 1
                         if self.check_legal_pos_to_move(r + i, c, board):
                             obs["legal_action"][r][c] = 1
-                            obs["legal_action"][r + min(i, 0)][c] = 1
+                            obs["legal_action"][r + i][c] = 1
                             action_space[
                                 (self.num_col - 1) * self.num_row
                                 + self.num_col * (r + min(i, 0))
