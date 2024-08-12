@@ -4,6 +4,8 @@ from itertools import product
 from functools import wraps
 from abc import ABC, abstractmethod
 import numpy as np
+import random
+from collections import Counter
 
 from gym_match3.envs.constants import GameObject, mask_immov_mask, need_to_match
 
@@ -190,7 +192,7 @@ class Board(AbstractBoard):
         # print(indx)
         self.__validate_points(indx)
         if isinstance(indx, Point):
-            self.__board.itemset(indx.get_coord(), value)
+            self.__board[indx.get_coord()] = value
         else:
             raise ValueError("Only Point class supported for setting shapes")
 
@@ -320,6 +322,7 @@ class Board(AbstractBoard):
                 ).T.tolist()
             )
         self.__board[coordinates] = np.nan
+        # print("DELETE: ", self.__board)
         return self
 
     def get_line(self, ind, axis=1):
@@ -614,56 +617,66 @@ class PowerUpActivator(AbstractPowerUpActivator):
         point2 = point + directions
         shape1 = board.get_shape(point)
         shape2 = board.get_shape(point2)
-
+    
         if shape1 in GameObject.powers and shape2 in GameObject.powers:
-            # # Merge power_up
-            # pass
-            # if shape1 > shape2:
-            #     shape1, shape2 = shape2, shape1
+            
+            #adding both points to return_brokens
+            return_brokens.add(point)
+            return_brokens.add(point2)
+            
+            # Merge power_up
+            if shape1 <= shape2:
+                shape1, shape2 = shape2, shape1
+                point, point2 = point2, point
 
-            # # With disco
-            # if shape2 == GameObject.power_disco:
-            #     if shape1 != GameObject.power_disco:
-            #         chosen_color = np.random.randint(1, board.n_shapes + 1)
-            #         for i in range(board.board_size[0]):
-            #             for j in range(board.board_size[1]):
-            #                 _p = Point(i, j)
-            #                 if board.get_shape(_p) == chosen_color:
-            #                     return_brokens.add(point)
-            #                     disco_brokens.add(_p)
-            #                     brokens.extend(self.__activate_not_merge(shape1, _p, board, None))
-            #     else:
-            #         brokens = [Point(i, j) for i, j in product(range(board.board_size[0]), range(board.board_size[1]))]
-            #         return set(brokens),
-
-            # # With plane
-            # elif shape1 == GameObject.power_missile_h and shape2 == GameObject.power_plane:
-            #     pass
-            # elif shape1 == GameObject.power_missile_v and shape2 == GameObject.power_plane:
-            #     pass
-            # elif shape1 == GameObject.power_bomb and shape2 == GameObject.power_plane:
-            #     pass
-            # elif shape1 == GameObject.power_plane and shape2 == GameObject.power_plane:
-            #     pass
-
-            # # With bomb
-            # elif shape1 == GameObject.power_missile_h and shape2 == GameObject.power_bomb:
-            #     pass
-            # elif shape1 == GameObject.power_missile_v and shape2 == GameObject.power_bomb:
-            #     pass
-            # elif shape1 == GameObject.power_bomb and shape2 == GameObject.power_bomb:
-            #     pass
-
-            # # With missile_v
-            # elif shape1 == GameObject.power_missile_h and shape2 == GameObject.power_missile_v:
-            #     pass
-            # elif shape1 == GameObject.power_missile_v and shape2 == GameObject.power_missile_v:
-            #     pass
-
-            # # With missile_h
-            # elif shape1 == GameObject.power_missile_h and shape2 == GameObject.power_missile_h:
-            #     pass
-            pass
+            # With disco
+            if shape1 == GameObject.power_disco:
+                if shape2 != GameObject.power_disco:
+                    chosen_color = np.random.randint(1, board.n_shapes + 1)
+                    # print("Chosen Color For merging", chosen_color)
+                    for i in range(board.board_size[0]):
+                        for j in range(board.board_size[1]):
+                            _p = Point(i, j)
+                            if board.get_shape(_p) == chosen_color:
+                                return_brokens.add(_p)
+                                disco_brokens.add(_p)
+                                shape2 = shape2 if (shape2 > GameObject.power_missile_v) else random.choice([GameObject.power_missile_h, GameObject.power_missile_v])
+                                brokens.extend(self.__activate_not_merge(shape2, _p, board, None))
+                else:
+                    brokens = [Point(i, j) for i, j in product(range(board.board_size[0]), range(board.board_size[1]))]
+                    disco_brokens = set(brokens)
+                    
+            # With plane
+            elif shape1 == GameObject.power_plane:
+                for _dir in self.__plane_affect:
+                        brokens.append(point + Point(*_dir))
+                mons_pos = board.get_monster()
+                try:
+                    if shape2 != GameObject.power_plane:
+                        random_mons = mons_pos[np.random.randint(0, len(mons_pos))]
+                        brokens.append(random_mons)
+                        brokens.extend(self.__activate_not_merge(shape2, random_mons, board, None))
+                    else:
+                        brokens.extend(random.sample(mons_pos, 6) if len(mons_pos) > 6 else mons_pos)
+                except:
+                    # print("No Monster on Board")
+                    print(board)
+                    
+            # With bomb
+            elif shape1 == GameObject.power_bomb:
+                if shape2  != GameObject.power_bomb:
+                    for i in range(-1,2,1):
+                        dir = Point(i,0) if shape2 == GameObject.power_missile_h else Point(0,i)
+                        brokens.extend(self.__activate_not_merge(shape2, point + dir, board, None))
+                else:
+                    for i in range(-4, 5, 1):
+                        for j in range(-4, 5, 1):
+                            # print("Point to disintegrate: ", point + Point(i, j))
+                            brokens.append(point + Point(i, j))
+            # With missiles
+            else:
+                brokens.extend(self.__activate_not_merge( GameObject.power_missile_h, point, board, None))
+                brokens.extend(self.__activate_not_merge( GameObject.power_missile_v, point, board, None))
 
         elif shape1 in GameObject.powers:
             return_brokens.add(point)
@@ -673,6 +686,7 @@ class PowerUpActivator(AbstractPowerUpActivator):
                 )
             else:
                 brokens = self.__activate_not_merge(shape1, point, board, shape2)
+                
         elif shape2 in GameObject.powers:
             return_brokens.add(point2)
             if shape2 == GameObject.power_disco:
@@ -681,8 +695,9 @@ class PowerUpActivator(AbstractPowerUpActivator):
                 )
             else:
                 brokens = self.__activate_not_merge(shape2, point2, board, shape1)
+                
+        inside_brokens = copy.copy(brokens)
         brokens = list(set(brokens))
-
         while brokens:
             try:
                 consider_point = brokens.pop(0)
@@ -701,28 +716,29 @@ class PowerUpActivator(AbstractPowerUpActivator):
                             )
                         )
                     else:
-                        brokens.extend(
-                            self.__activate_not_merge(
+                        more_pu =   self.__activate_not_merge(
                                 shape_c, consider_point, board, shape1
                             )
-                        )
+                        brokens.extend(more_pu)
+                        inside_brokens.extend(more_pu)
                         brokens = list(set(brokens))
             except OutOfBoardError:
                 continue
+        
+        return return_brokens, disco_brokens, inside_brokens
 
-        return return_brokens, disco_brokens
-
-    def __activate_merge(
-        self,
-        shape1: int,
-        shape2: int,
-    ):
-        pass
+    # def __activate_merge(
+    #     self,
+    #     shape1: int,
+    #     shape2: int,
+    # ):
+    #     pass
 
     def __activate_not_merge(
         self, power_up_type: int, point: Point, board: Board, _color: int = None
     ):
         brokens = []
+        # print("Power up to explode", power_up_type, point)
         if power_up_type == GameObject.power_plane:
             for _dir in self.__plane_affect:
                 brokens.append(point + Point(*_dir))
@@ -1043,8 +1059,12 @@ class AbstractMonster(ABC):
         """
         # print("Im mons, get dame from brokens", brokens)
         __matches = [ele.point for ele in matches]
+        mons_inside_dmg = 0 
+        for coor in brokens:
+            if coor in set(self.__inside_dmg_mask):
+                mons_inside_dmg += 1
         return len(set(self.dmg_mask) & set(__matches)), \
-            len(set(self.inside_dmg_mask) & set(brokens)) + len(set(self.dmg_mask) & set(disco_brokens))
+            mons_inside_dmg + len(set(self.dmg_mask) & set(disco_brokens))
 
 
 class DameMonster(AbstractMonster):
@@ -1307,9 +1327,7 @@ class Game(AbstractGame):
         self.list_monsters = copy.deepcopy(list_monsters)
         self.num_mons = len(self.list_monsters)
         self.__player_hp = self.__max_player_hp
-        
-        # self.board.put_shape(Point(1, 1), GameObject.power_disco)
-
+    
         return self
 
     def __start_random(self):
@@ -1324,8 +1342,9 @@ class Game(AbstractGame):
             score = self.__move(point, direction)
             
             return score
-        except:
-            print([mon.get_hp() for mon in self.list_monsters])
+        except Exception as e:
+            print("Error when swaping", e)
+            print("There was an error when swaping", [mon.get_hp() for mon in self.list_monsters])
             return {
                 "score": 0,
                 "cancel_score": 0,
@@ -1349,12 +1368,12 @@ class Game(AbstractGame):
 
         s_t = time.time()
 
-        matches, new_power_ups, brokens, disco_brokens = self.__check_matches(point, direction)
+        matches, new_power_ups, brokens, disco_brokens , inside_brokens = self.__check_matches(point, direction)
 
         score += len(brokens) + len(disco_brokens)
 
         for i in range(len(self.list_monsters)):
-            match_damage, pu_damage = self.list_monsters[i].get_dame(matches, brokens, disco_brokens)
+            match_damage, pu_damage = self.list_monsters[i].get_dame(matches, inside_brokens, disco_brokens)
             total_match_dmg += match_damage
             total_power_dmg += pu_damage
             score -= pu_damage
@@ -1421,14 +1440,14 @@ class Game(AbstractGame):
     def __check_matches(self, point: Point, direction: Point):
         tmp_board = self.__get_copy_of_board()
         tmp_board.move(point, direction)
-        return_brokens, disco_brokens = self.__pu_activator.activate_power_up(
+        return_brokens, disco_brokens, inside_brokens= self.__pu_activator.activate_power_up(
             point, direction, tmp_board
         )
         if return_brokens:
             tmp_board.delete(return_brokens)
             self.__filler.move_and_fill(tmp_board)
         matches, new_power_ups = self.__mtch_searcher.scan_board_for_matches(tmp_board)
-        return matches, new_power_ups, return_brokens, disco_brokens
+        return matches, new_power_ups, return_brokens, disco_brokens, inside_brokens
 
     def _sweep_died_monster(self):
         mons_points = set()
