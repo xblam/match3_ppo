@@ -1,4 +1,5 @@
 import random
+import time
 from typing import Any, Dict, List, Optional, Tuple, Type, TypeVar, Union
 
 from gym_match3.envs.match3_env import Match3Env
@@ -7,6 +8,8 @@ env = Match3Env(90)
 
 print(f"Total size of the game state{env.observation_space}")
 print(f"Number of actions in this game{env.action_space}")
+
+s_t = time.time()
 
 _last_obs, infos = env.reset()
 dones = False
@@ -30,3 +33,5 @@ while not dones:
     else:
         print("No indices with value 1 found.")
         dones = True
+
+print("end game time", time.time() - s_t)

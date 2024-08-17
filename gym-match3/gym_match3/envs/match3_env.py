@@ -125,7 +125,6 @@ class Match3Env(gym.Env):
 
     def step(self, action):
         # make action
-        s_t = time.time()
         m3_action = self.__get_action(action)
         # print(m3_action) #openlater
         ob = {}
@@ -174,9 +173,6 @@ class Match3Env(gym.Env):
             ob["board"] = self.__get_board()
             ob["list_monster"] = self.__game.list_monsters
 
-        # print("play time", time.time() - s_t)
-        s_t = time.time()
-
         obs = self.helper._format_observation(ob["board"], ob["list_monster"], "cpu")
         # Check if non legal_action
         if 1 not in np.unique(obs["action_space"]):
@@ -187,7 +183,6 @@ class Match3Env(gym.Env):
             obs, infos = self.reset()
             return obs, reward, episode_over, infos
 
-        # print("process obs", time.time() - s_t)
 
         return (
             self.helper.obs_to_tensor(obs["obs"]),

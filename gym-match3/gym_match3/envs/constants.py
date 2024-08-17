@@ -41,6 +41,5 @@ def mask_immov_mask(line, immovable_shape, can_move_blocker=False):
 
     return immov_mask
 
-
 def need_to_match(shape):
-    return shape in GameObject.tiles
+    return shape in np.concatenate([GameObject.tiles, GameObject.powers])

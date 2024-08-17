@@ -1,4 +1,5 @@
 import copy
+import time
 from typing import Union
 from itertools import product
 from functools import wraps
@@ -524,10 +525,14 @@ class MatchesSearcher(AbstractSearcher):
         self.__3length, self.__4length, self.__5length = range(2, 5)
         super().__init__(board_ndim)
 
-    def scan_board_for_matches(self, board: Board, need_all: bool = True):
+    def scan_board_for_matches(self, board: Board, need_all: bool = True, checking_point: list[Point] = []):
         matches = set()
         new_power_ups = dict()
         for point in self.points_generator(board):
+            if not need_all:
+                assert checking_point is not None, "checking_point must have if need_all is False"
+                if point not in checking_point:
+                    continue
             to_del, to_add = self.__get_match3_for_point(
                 board, point, need_all=need_all
             )
@@ -810,15 +815,16 @@ class MovesSearcher(AbstractMovesSearcher, MatchesSearcher):
             if board.get_shape(point) in GameObject.powers:
                 for direction in self.directions_gen():
                     try:
-                        if board.get_shape(point + Point(*direction)) in np.concatenate([GameObject.monsters, GameObject.blockers]):
+                        if board.get_shape(point + Point(*direction)) in np.concatenate([GameObject.monsters, GameObject.blockers, [GameObject.immovable_shape]]):
                             continue
-                        board.move(point, Point(*direction))
-                        # inverse move
-                        board.move(point, Point(*direction))
-                        not_have_pu = False
-                        if not all_moves:
+                        # board.move(point, Point(*direction))
+                        # # inverse move
+                        # board.move(point, Point(*direction))
+                        elif board.get_shape(point + Point(*direction)) in np.concatenate([GameObject.tiles, GameObject.powers]):
+                            not_have_pu = False
                             possible_moves.add((point, tuple(direction)))
-                            break
+                            if not all_moves:
+                                break
 
                     except (OutOfBoardError, ImmovableShapeError):
                         continue
@@ -827,12 +833,13 @@ class MovesSearcher(AbstractMovesSearcher, MatchesSearcher):
 
         if all_moves == True or (all_moves == False and not_have_pu):
             for point in self.points_generator(board):
-                possible_moves_for_point = self.__search_moves_for_point(
-                    board, point, need_all=all_moves
-                )
-                possible_moves.update(possible_moves_for_point)
-                if len(possible_moves_for_point) > 0 and not all_moves:
-                    break
+                if board.get_shape(point) in GameObject.tiles:
+                    possible_moves_for_point = self.__search_moves_for_point(
+                        board, point, need_all=all_moves
+                    )
+                    possible_moves.update(possible_moves_for_point)
+                    if len(possible_moves_for_point) > 0 and not all_moves:
+                        break
         return possible_moves
 
     def __search_moves_for_point(self, board: Board, point: Point, need_all=True):
@@ -846,7 +853,9 @@ class MovesSearcher(AbstractMovesSearcher, MatchesSearcher):
                 if board.get_shape(point + Point(*direction)) in np.concatenate([GameObject.monsters, GameObject.blockers]):
                     continue
                 board.move(point, Point(*direction))
-                matches, _ = self.scan_board_for_matches(board, need_all=need_all)
+                if need_all == False:
+                    checking_point = [point, point + Point(*direction)]
+                matches, _ = self.scan_board_for_matches(board, need_all=need_all, checking_point=checking_point)
                 # inverse move
                 board.move(point, Point(*direction))
             except (OutOfBoardError, ImmovableShapeError):
@@ -1061,7 +1070,7 @@ class AbstractMonster(ABC):
         __matches = [ele.point for ele in matches]
         mons_inside_dmg = 0 
         for coor in brokens:
-            if coor in set(self.__inside_dmg_mask):
+            if coor in set(self.inside_dmg_mask):
                 mons_inside_dmg += 1
         return len(set(self.dmg_mask) & set(__matches)), \
             mons_inside_dmg + len(set(self.dmg_mask) & set(disco_brokens))
@@ -1364,10 +1373,6 @@ class Game(AbstractGame):
         dmg = 0
         self_dmg = 0
 
-        import time
-
-        s_t = time.time()
-
         matches, new_power_ups, brokens, disco_brokens , inside_brokens = self.__check_matches(point, direction)
 
         score += len(brokens) + len(disco_brokens)
@@ -1488,14 +1493,9 @@ class Game(AbstractGame):
         scan board, then delete matches, move nans, fill
         repeat until no matches and appear possible moves
         """
-        # import time
-        # s_t = time.time()
-        score = self.__scan_del_mvnans_fill_until()
-        # print("up", time.time() - s_t)
-        # s_t = time.time()
+        self.__scan_del_mvnans_fill_until()
         self.__shuffle_until_possible()
-        # print("shuffle", time.time() - s_t)
-        return score
+        return 0
 
     def __get_matches(self):
         return self.__mtch_searcher.scan_board_for_matches(self.board)
@@ -1508,21 +1508,20 @@ class Game(AbstractGame):
 
     def __scan_del_mvnans_fill_until(self):
         score = 0
-        matches, _ = self.__get_matches()
+        matches, new_power_ups = self.__get_matches()
         score += len(matches)
         while len(matches) > 0:
             self.board.delete(matches)
+            for _point, _shape in new_power_ups.items():
+                self.board.put_shape(_point, _shape)
             self.__filler.move_and_fill(self.board)
-            matches, _ = self.__get_matches()
+            matches, new_power_ups = self.__get_matches()
             score += len(matches)
         return score
 
     def __shuffle_until_possible(self):
-        import time
-
         s_t = time.time()
         possible_moves = self.__get_possible_moves()
-        # print("find possible moves", time.time() - s_t)
         while len(possible_moves) == 0:
             print("not have move")
             self.board.shuffle(self.__random_state)
