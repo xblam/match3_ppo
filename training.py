@@ -10,7 +10,7 @@ from training.m3_model.m3_cnn import M3CnnFeatureExtractor, M3CnnLargerFeatureEx
 
 def get_args():
     parser = argparse.ArgumentParser(
-        "BEiT fine-tuning and evaluation script for image classification",
+        "Match3 with PPO",
         add_help=False,
     )
 
@@ -26,6 +26,12 @@ def get_args():
         type=int,
         nargs="+",
         help="The linear layer size of the Value Function",
+    )
+    parser.add_argument(
+        "--obs-order",
+        type=str,
+        nargs="+",
+        help="Which features you want to use?",
     )
     parser.add_argument(
         "--prefix_name",
@@ -95,7 +101,7 @@ def get_args():
 
 
 args = get_args()
-env = Match3Env(90)
+env = Match3Env(90, obs_order=args.obs_order)
 
 print(env.observation_space)
 print(env.action_space)
