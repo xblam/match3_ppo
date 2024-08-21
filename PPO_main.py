@@ -1,30 +1,25 @@
-import os
-import numpy as np
-import torch as T
-import torch.nn as nn
-import torch.optim as optim
 from torch.distributions.categorical import Categorical
 from gym_match3.envs.match3_env import Match3Env
 import wandb
 import cProfile, pstats
 from PPO import *
 import cProfile, pstats
+import argparse
 
 def run(num_episodes=1000, log=True, load=False, model_id=22):
     moves_dict = dict()
     env = Match3Env()
     agent = Agent()
-    # add the condition here that lets us initialize the agent's models to whatever we want them to be
+    current_level = 0
+    game_won = []
+    learn_iters = 0
+
     if load: 
         agent.load_model(model_id)
         print("LOADING PREVIOUS MODEL")
         agent.run_id = f'{model_id}-{agent.run_id}'
-    game_won = []
-
-    learn_iters = 0
+        
     if log: wandb.init(project="match3_easy_ppo", name=str(agent.run_id))
-
-    current_level = 0
 
     for current_episode in range(num_episodes): 
         # set episode damange and steps to 0
@@ -72,14 +67,25 @@ def run(num_episodes=1000, log=True, load=False, model_id=22):
 
         
         # log all of the information with wandb
-        if log: wandb.log({"episode_damage":episode_damage, "episode":current_episode, 'game reward':reward['game'], 'total reward':reward['game']+episode_damage, 'monster remaining hp' : mon_hp, 'player remaining hp':player_hp, 'actor loss': actor_loss, 'critic loss':critic_loss, 'current level':current_level, 'win rate':win_rate})
+        if log: wandb.log({"episode_damage":episode_damage, "episode":current_episode, 'game reward':reward['game'], 'total reward':reward['game']+
+                           episode_damage, 'monster remaining hp' : mon_hp, 'player remaining hp':player_hp, 'actor loss': actor_loss, 'critic loss':critic_loss, 'current level':current_level, 'win rate':win_rate})
 
 def main():
-    # in the future if you have time you should add argparse in here to make it easier
-    run()
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-e', '--episodes', type=int)
+    parser.add_argument('-log', '--log', action='store_true')
+    parser.add_argument('-m', '--model', type=int)
+    args = parser.parse_args()
+
+    load_model = False
+    if args.model: load_model = True
+    
+    run(args.episodes, args.log, load_model, args.model)
    
 
 if __name__ == '__main__':
+
     profiler = cProfile.Profile()
     profiler.enable()
 

@@ -4,10 +4,6 @@ import torch as T
 import torch.nn as nn
 import torch.optim as optim
 from torch.distributions.categorical import Categorical
-from gym_match3.envs.match3_env import Match3Env
-import argparse
-import wandb
-import cProfile, pstats
 
 DEVICE = T.device("cuda" if T.cuda.is_available() else "cpu")
 if (T.cuda.is_available()):

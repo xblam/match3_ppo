@@ -27,6 +27,7 @@ share/python-wheels/
 MANIFEST
 ppo_state_dicts/*
 gym_match3/usages/*
+.vscode
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
