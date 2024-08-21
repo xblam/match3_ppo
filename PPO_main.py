@@ -11,7 +11,7 @@ from PPO import *
 import cProfile, pstats
 
 def main():
-    log = False
+    log = True
     load = False
     model_id = 30
     env = Match3Env()
@@ -54,7 +54,7 @@ def main():
             obs = new_obs
             print('run id', agent.run_id, '\nepisode', current_episode, '\nscore', episode_damage, '\ntime_steps', n_steps, '\nlearning_steps', learn_iters, '\nreward', reward, '\nplayer hp', player_hp, '\nmonster_hp', mon_hp)
 
-        # when the game is over, we will train the model
+        # when the game is over, we will train the model, need to give it the end game reward so it can factor it in when updating model
         actor_loss, critic_loss = agent.learn(reward['game'])
         learn_iters += 1
         agent.save_model()
@@ -72,7 +72,8 @@ def main():
         
         # log all of the information with wandb
         if log: wandb.log({"episode_damage":episode_damage, "episode":current_episode, 'game reward':reward['game'], 'total reward':reward['game']+episode_damage, 'monster remaining hp' : mon_hp, 'player remaining hp':player_hp, 'actor loss': actor_loss, 'critic loss':critic_loss, 'current level':current_level, 'win rate':win_rate})
-    all_variables = dir() 
+    
+    # this is just for troubleshooting, to print out the type of all the variables after the run
     names_list = ['obs', 'action']
     for name in names_list:
         myvalue = eval(name) 

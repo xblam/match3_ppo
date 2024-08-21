@@ -434,64 +434,64 @@ LEVELS = [
                     ),
     ]),
 
-    # Level(10, 9, 5, [
-    #     [0, 0, 0, 0, 0, 0, 0, 0, 0],
-    #     [0, 0, 0, 0, 0, 0, 0, 0, 0],
-    #     [0, 0, 0, 0, 0, 0, 0, 0, 0],
-    #     [0, 0, 0, 0, 0, 0, 0, 0, 0],
-    #     [0, 0, 0, 0, GameObject.monster_box_box, GameObject.monster_box_box, 0, 0, 0],
-    #     [0, 0, 0, 0, GameObject.monster_box_box, GameObject.monster_box_box, 0, 0, 0],
-    #     [0, 0, 0, 0, 0, 0, 0, 0, 0],
-    #     [0, 0, 0, 0, 0, 0, 0, 0, 0],
-    #     [0, 0, 0, 0, 0, 0, 0, 0, 0],
-    #     [0, 0, 0, 0, 0, 0, 0, 0, 0],
-    # ], [
-    #     BoxMonster(box_mons_type=GameObject.monster_box_box,
-    #                relax_interval=6,
-    #                setup_interval=0, 
-    #                position=Point(4, 4),
-    #                width=2,
-    #                height=2)
-    # ]),
+    Level(10, 9, 5, [
+        [0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, GameObject.monster_box_box, GameObject.monster_box_box, 0, 0, 0],
+        [0, 0, 0, 0, GameObject.monster_box_box, GameObject.monster_box_box, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0],
+    ], [
+        BoxMonster(box_mons_type=GameObject.monster_box_box,
+                   relax_interval=6,
+                   setup_interval=0, 
+                   position=Point(4, 4),
+                   width=2,
+                   height=2)
+    ]),
 
-    # Level(10, 9, 5, [
-    #     [0, 0, 0, 0, 0, 0, 0, 0, 0],
-    #     [0, 0, 0, 0, 0, 0, 0, 0, 0],
-    #     [0, 0, 0, 0, 0, 0, 0, 0, 0],
-    #     [0, 0, 0, 0, 0, 0, 0, 0, 0],
-    #     [0, 0, 0, 0, GameObject.monster_box_bomb, GameObject.monster_box_bomb, 0, 0, 0],
-    #     [0, 0, 0, 0, GameObject.monster_box_bomb, GameObject.monster_box_bomb, 0, 0, 0],
-    #     [0, 0, 0, 0, 0, 0, 0, 0, 0],
-    #     [0, 0, 0, 0, 0, 0, 0, 0, 0],
-    #     [0, 0, 0, 0, 0, 0, 0, 0, 0],
-    #     [0, 0, 0, 0, 0, 0, 0, 0, 0],
-    # ], [
-    #     BoxMonster(box_mons_type=GameObject.monster_box_bomb,
-    #                relax_interval=6,
-    #                setup_interval=0,
-    #                position=Point(4, 4),
-    #                width=2,
-    #                height=2)
-    # ]),
+    Level(10, 9, 5, [
+        [0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, GameObject.monster_box_bomb, GameObject.monster_box_bomb, 0, 0, 0],
+        [0, 0, 0, 0, GameObject.monster_box_bomb, GameObject.monster_box_bomb, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0],
+    ], [
+        BoxMonster(box_mons_type=GameObject.monster_box_bomb,
+                   relax_interval=6,
+                   setup_interval=0,
+                   position=Point(4, 4),
+                   width=2,
+                   height=2)
+    ]),
 
-    # Level(10, 9, 5, [
-    #     [0, 0, 0, 0, 0, 0, 0, 0, 0],
-    #     [0, 0, 0, 0, 0, 0, 0, 0, 0],
-    #     [0, 0, 0, 0, 0, 0, 0, 0, 0],
-    #     [0, 0, 0, 0, 0, 0, 0, 0, 0],
-    #     [0, 0, 0, 0, GameObject.monster_box_thorny, GameObject.monster_box_thorny, 0, 0, 0],
-    #     [0, 0, 0, 0, GameObject.monster_box_thorny, GameObject.monster_box_thorny, 0, 0, 0],
-    #     [0, 0, 0, 0, 0, 0, 0, 0, 0],
-    #     [0, 0, 0, 0, 0, 0, 0, 0, 0],
-    #     [0, 0, 0, 0, 0, 0, 0, 0, 0],
-    #     [0, 0, 0, 0, 0, 0, 0, 0, 0],
-    # ], [
-    #     BoxMonster(box_mons_type=GameObject.monster_box_thorny,
-    #                relax_interval=6,
-    #                setup_interval=0, 
-    #                position=Point(4, 4),
-    #                width=2,
-    #                height=2)
-    # ]),
+    Level(10, 9, 5, [
+        [0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, GameObject.monster_box_thorny, GameObject.monster_box_thorny, 0, 0, 0],
+        [0, 0, 0, 0, GameObject.monster_box_thorny, GameObject.monster_box_thorny, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0],
+    ], [
+        BoxMonster(box_mons_type=GameObject.monster_box_thorny,
+                   relax_interval=6,
+                   setup_interval=0, 
+                   position=Point(4, 4),
+                   width=2,
+                   height=2)
+    ])
 ]
 

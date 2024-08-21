@@ -35,6 +35,7 @@ gym_match3/usages/*
 *.spec
 
 # Installer logs
+profile_results.prof
 pip-log.txt
 pip-delete-this-directory.txt
 
