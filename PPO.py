@@ -105,6 +105,7 @@ class Agent:
         self.policy_clip = .2
         self.n_epochs = n_epochs
         self.gae_lambda = .95
+        self.win_list = []
 
         self.actor = ActorNetwork().to(DEVICE)
         self.critic = CriticNetwork().to(DEVICE)
@@ -122,7 +123,8 @@ class Agent:
             file.write(str(self.run_id+1))
 
     def save_model(self):
-        checkpoint = {'actor_state': self.actor.state_dict(), 'critic_state': self.critic.state_dict(), 'actor_optimizer': self.actor.optimizer.state_dict(), 'critic_optimizer': self.critic.optimizer.state_dict()}
+        checkpoint = {'actor_state': self.actor.state_dict(), 'critic_state': self.critic.state_dict(), 'actor_optimizer': self.actor.optimizer.state_dict(), 
+                      'critic_optimizer': self.critic.optimizer.state_dict(), 'win_list':self.win_list}
         os.makedirs(self.counter_folder, exist_ok=True)
         file_path = os.path.join(self.counter_folder, f"{self.run_id}_state_dict.pth")
         T.save(checkpoint, file_path)

@@ -10,7 +10,7 @@ import cProfile, pstats
 from PPO import *
 import cProfile, pstats
 
-def run(num_episodes=1000, log=True, load=True, model_id=22):
+def run(num_episodes=1000, log=True, load=False, model_id=22):
     moves_dict = dict()
     env = Match3Env()
     agent = Agent()
@@ -68,10 +68,14 @@ def run(num_episodes=1000, log=True, load=True, model_id=22):
             current_level = 0
             game_won.append(0)
         win_rate = sum(game_won[-100:])/(min(current_episode+1, 100))
+        agent.win_list = game_won
+
         
         # log all of the information with wandb
         if log: wandb.log({"episode_damage":episode_damage, "episode":current_episode, 'game reward':reward['game'], 'total reward':reward['game']+episode_damage, 'monster remaining hp' : mon_hp, 'player remaining hp':player_hp, 'actor loss': actor_loss, 'critic loss':critic_loss, 'current level':current_level, 'win rate':win_rate})
+
 def main():
+    # in the future if you have time you should add argparse in here to make it easier
     run()
    
 
