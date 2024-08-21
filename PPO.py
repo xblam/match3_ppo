@@ -40,51 +40,6 @@ class PPOMemory:
     
     def get_memory(self):
         return self.states, self.actions, self.probs, self.vals, self.rewards, self.dones 
-    
-class SaveAndLoad():
-    def __init__(self):
-        self.counter_folder = "ppo_state_dicts"
-        counter_file = "ppo_state_dicts/ppo_run_counter.txt"
-        self.run_id = self.read_counter(f'{counter_file}')
-        self.increment_counter(counter_file)
-
-    def __init__(self):
-        self.counter_folder = "ppo_state_dicts"
-        if not os.path.exists(self.counter_folder):
-            os.makedirs(self.counter_folder)
-        counter_file = os.path.join(self.counter_folder, "ppo_run_counter.txt")
-        self.run_id = self.read_counter(counter_file)
-        self.increment_counter(counter_file)
-
-    def read_counter(self, file_path):
-        if os.path.exists(file_path):
-            with open(file_path, 'r') as file:
-                try: return int(file.read().strip())
-                except ValueError: return 0
-        else: return 0
-    
-    def increment_counter(self, file_path):
-        with open(file_path, 'w') as file:
-            file.write(str(self.run_id+1))
-
-    def save_model(self, actor, critic):
-        checkpoint = {'actor_state': actor.state_dict(), 'critic_state': critic.state_dict(), 'actor_optimizer': actor.optimizer.state_dict(), 'critic_optimizer': critic.optimizer.state_dict()}
-        os.makedirs(self.counter_folder, exist_ok=True)
-        file_path = os.path.join(self.counter_folder, f"{self.run_id}_state_dict.pth")
-        T.save(checkpoint, file_path)
-
-    def load_model(self, actor, critic):
-        file_path = os.path.join(self.counter_folder, f"{self.run_id}_state_dict.pth")
-        state_dict = T.load(file_path)
-        actor.load_state_dict(state_dict['actor_state'])
-        critic.load_state_dict(state_dict['critic_state'])
-        actor.optimizer.load_state_dict(state_dict['actor_optimizer'])
-        critic.optimizer.load_state_dict(state_dict['critic_optimizer'])
-
-
-if __name__ == '__main__':
-    s = SaveAndLoad()
-    
 
 class ActorNetwork(nn.Module):
     # the asterisk just means that we are unpacking whatever dimensions the input dims is
@@ -154,7 +109,6 @@ class Agent:
         self.actor = ActorNetwork().to(DEVICE)
         self.critic = CriticNetwork().to(DEVICE)
         self.memory = PPOMemory()
-        self.saver = SaveAndLoad()
        
     def read_counter(self, file_path):
         if os.path.exists(file_path):
