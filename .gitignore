@@ -25,6 +25,8 @@ share/python-wheels/
 .installed.cfg
 *.egg
 MANIFEST
+ppo_state_dicts/*
+gym_match3/usages/*
 
 # PyInstaller
 #  Usually these files are written by a python script from a template

@@ -124,6 +124,7 @@ class Match3Env(gym.Env):
         return self.__match3_actions[ind]
 
     def step(self, action):
+        print(self.__get_board())
         # make action
         m3_action = self.__get_action(action)
         # print(m3_action) #openlater
@@ -167,6 +168,7 @@ class Match3Env(gym.Env):
             obs, infos = self.reset()
             reward
 
+
             return obs, reward, episode_over, infos
         else:
             episode_over = False
@@ -198,6 +200,12 @@ class Match3Env(gym.Env):
         return self.helper.obs_to_tensor(obs["obs"]), {
             "action_space": obs["action_space"]
         }
+    
+    def get_player_hp(self):
+        return (self.__game.get_player_hp())
+    
+    def get_mon_hp(self):
+        return sum([mon.get_hp() for mon in self.__game.list_monsters if mon.real_monster ])
 
     def __swap(self, point1, point2):
         try:
