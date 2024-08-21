@@ -10,17 +10,19 @@ import cProfile, pstats
 from PPO import *
 import cProfile, pstats
 
-def run(num_episodes=1000, log=True, load=False, model_id=14):
+def run(num_episodes=1000, log=True, load=True, model_id=22):
+    moves_dict = dict()
     env = Match3Env()
     agent = Agent()
     # add the condition here that lets us initialize the agent's models to whatever we want them to be
     if load: 
         agent.load_model(model_id)
-        print("LEADING PREVIOUS MODEL")
+        print("LOADING PREVIOUS MODEL")
+        agent.run_id = f'{model_id}-{agent.run_id}'
     game_won = []
 
     learn_iters = 0
-    if log: wandb.init(project="match3_easy_ppo", name=str(f'{agent.run_id}'))
+    if log: wandb.init(project="match3_easy_ppo", name=str(agent.run_id))
 
     current_level = 0
 
@@ -40,6 +42,8 @@ def run(num_episodes=1000, log=True, load=False, model_id=14):
             # choose an action masked by the valid_actions list and take the action, and record the results
             action, prob, val = agent.choose_action(obs, infos)
             new_obs, reward, done, infos = env.step(action) 
+
+            moves_dict[action] = moves_dict.get(action, 0) + 1
 
             # increment the steps, and add to total damage. Save all these values to memory
             n_steps += 1

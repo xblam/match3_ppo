@@ -494,7 +494,7 @@ medium_levels = [Level(10, 9, 5, [
 
     
 LEVELS = [   
-    # *easy_levels,
+    *easy_levels,
     *medium_levels
 ]
 
