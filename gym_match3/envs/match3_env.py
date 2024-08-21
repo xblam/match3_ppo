@@ -201,6 +201,14 @@ class Match3Env(gym.Env):
             "action_space": obs["action_space"]
         }
     
+    def sample(self, *args, **kwargs):
+        board, list_monsters = self.levels.sample()
+        self.__game.start(board, list_monsters)
+        obs = self.helper._format_observation(self.__get_board(), list_monsters, "cpu")
+        return self.helper.obs_to_tensor(obs["obs"]), {
+            "action_space": obs["action_space"]
+        }
+    
     def get_player_hp(self):
         return (self.__game.get_player_hp())
     

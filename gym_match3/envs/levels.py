@@ -167,11 +167,7 @@ for x in range(0, 9):
                 )])
         )
 
-
-LEVELS = [   
-    *easy_levels,
-
-    Level(10, 9, 5, [
+medium_levels = [Level(10, 9, 5, [
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -492,6 +488,9 @@ LEVELS = [
                    position=Point(4, 4),
                    width=2,
                    height=2)
-    ])
+    ])]
+LEVELS = [   
+    # *easy_levels,
+    *medium_levels
 ]
 
