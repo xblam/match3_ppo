@@ -20,7 +20,7 @@ def run(num_episodes=1000, log=True, load=False, model_id=14):
     game_won = []
 
     learn_iters = 0
-    if log: wandb.init(project="match3_easy_ppo", name=str(f'{model_id}-{agent.run_id}'))
+    if log: wandb.init(project="match3_easy_ppo", name=str(f'{agent.run_id}'))
 
     current_level = 0
 
@@ -30,7 +30,7 @@ def run(num_episodes=1000, log=True, load=False, model_id=14):
         n_steps = 0
         
         # get new game board, observations, and valid moves
-        obs, infos = env.reset()
+        obs, infos = env.sample()
         done = False
         while not done:
             # get the health of the monster and the player before we reset the game

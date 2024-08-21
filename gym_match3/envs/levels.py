@@ -489,6 +489,10 @@ medium_levels = [Level(10, 9, 5, [
                    width=2,
                    height=2)
     ])]
+
+
+
+    
 LEVELS = [   
     # *easy_levels,
     *medium_levels
