@@ -10,20 +10,17 @@ import cProfile, pstats
 from PPO import *
 import cProfile, pstats
 
-def main():
-    log = True
-    load = False
-    model_id = 30
+def run(num_episodes=1000, log=True, load=False, model_id=14):
     env = Match3Env()
     agent = Agent()
     # add the condition here that lets us initialize the agent's models to whatever we want them to be
-    if load: agent.load(30)
-    num_episodes = 1
+    if load: 
+        agent.load_model(model_id)
+        print("LEADING PREVIOUS MODEL")
     game_won = []
 
     learn_iters = 0
-
-    if log: wandb.init(project="match3_easy_ppo", name=str(agent.run_id))
+    if log: wandb.init(project="match3_easy_ppo", name=str(f'{model_id}-{agent.run_id}'))
 
     current_level = 0
 
@@ -57,14 +54,12 @@ def main():
         # when the game is over, we will train the model, need to give it the end game reward so it can factor it in when updating model
         actor_loss, critic_loss = agent.learn(reward['game'])
         learn_iters += 1
-        agent.save_model()
-        # check the game reward to see what level we are on and update the win rate
+        # check the game reward to see what level we are on and update the win rate. we will also not save the state of the model unless it wins a game
         if reward['game'] > 0: 
             print('MONSTER KILLED, MOVING ON TO NEXT LEVEL')
             current_level += 1
             game_won.append(1)
             agent.save_model()
-            # find some way for you to save the model here so that we can use and test and display it some other time
         else: 
             current_level = 0
             game_won.append(0)
@@ -72,13 +67,8 @@ def main():
         
         # log all of the information with wandb
         if log: wandb.log({"episode_damage":episode_damage, "episode":current_episode, 'game reward':reward['game'], 'total reward':reward['game']+episode_damage, 'monster remaining hp' : mon_hp, 'player remaining hp':player_hp, 'actor loss': actor_loss, 'critic loss':critic_loss, 'current level':current_level, 'win rate':win_rate})
-    
-    # this is just for troubleshooting, to print out the type of all the variables after the run
-    names_list = ['obs', 'action']
-    for name in names_list:
-        myvalue = eval(name) 
-        print(name, "is", type(myvalue)) 
-
+def main():
+    run()
    
 
 if __name__ == '__main__':
@@ -92,9 +82,3 @@ if __name__ == '__main__':
     stats.dump_stats('profile_results.prof')
 
 
-
-all_variables = dir() 
-names_list = ['obs', 'action']
-for name in names_list:
-    myvalue = eval(name) 
-    print(name, "is", type(myvalue)) 
