@@ -124,7 +124,7 @@ class Match3Env(gym.Env):
         return self.__match3_actions[ind]
 
     def step(self, action):
-        print(self.__get_board())
+        # print(self.__get_board())
         # make action
         m3_action = self.__get_action(action)
         # print(m3_action) #openlater
@@ -224,9 +224,27 @@ class Match3Env(gym.Env):
 
     def __get_board(self):
         return self.__game.board.board.copy()
+#env.render()
+#action taken
+#env.render()
+    # def render(self, mode="human", close=False):
+    #     if close:
+    #         warnings.warn("close=True isn't supported yet")
+    #     self.renderer.render_board(self.__game.board)
+    #     print(self.__game.board)
 
-    def render(self, mode="human", close=False):
+    def render(self, action = None, mode="human", close=False):
         if close:
             warnings.warn("close=True isn't supported yet")
-        self.renderer.render_board(self.__game.board)
-        print(self.__game.board)
+        # print(self.__game.board)
+        result = action
+        if action != None:
+            tiles = self.__get_action(action)
+            p1, p2 = tiles
+            x1, y1 = p1.get_coord()
+            x2, y2 = p2.get_coord()
+            if x1 > x2 or y1 > y2:
+                x1, y1, x2, y2 = x2, y2, x1, y1
+            result =  {"x1": x1, "y1": y1, "x2": x2, "y2": y2}
+
+        self.renderer.render_board(self.__game.board,result)

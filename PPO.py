@@ -193,7 +193,6 @@ class Agent:
         weighted_clipped_probs = T.clamp(prob_ratio, 1-self.policy_clip, 1+self.policy_clip)*advantage
         actor_loss = -T.min(weighted_probs, weighted_clipped_probs).mean()
 
-        # dont really know what is going on but just know that we need this
         returns = advantage+values
         critic_loss = ((returns-critic_value)**2).mean()
 
