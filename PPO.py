@@ -102,6 +102,7 @@ class Agent:
         self.n_epochs = n_epochs
         self.gae_lambda = .95
         self.win_list = []
+        self.entropy_coefficient = 0.001
 
         self.actor = ActorNetwork().to(DEVICE)
         self.critic = CriticNetwork().to(DEVICE)
@@ -168,32 +169,35 @@ class Agent:
         return advantage
 
     def learn(self, end_game_reward): # we can definitely split this stuff into multiple batches and then train on the batches by themselves using multiprocessing
+        # first we compute the advantage using the GAE function
         advantage = self.compute_gae(end_game_reward)
         advantage = T.tensor(advantage).to(DEVICE)
 
-        # use all the lists from the games to update the model
+        # turn memory lists into tensors
         values = T.tensor(self.memory.vals).to(DEVICE)
         states = [tensor.to(DEVICE) for tensor in self.memory.states]
         states = T.stack(states)
         old_probs = T.tensor(self.memory.probs).to(DEVICE)
         actions = T.tensor(self.memory.actions).to(DEVICE)
 
+        # get the new distribution for all of those states
         dist = self.actor(states)
-        critic_value = self.critic(states)
+        entropy = dist.entropy().mean()
+        critic_value = self.critic(states) 
+        critic_value = T.squeeze(critic_value) # identical to vals but includes autograd, makes backprop easier
 
-        critic_value = T.squeeze(critic_value)
-
+        # calculate the probs ratios and use that to calculate actor loss
         new_probs = dist.log_prob(actions)
-        # prob_ratio = new_probs.exp() / old_probs.exp()
         prob_ratio = (new_probs - old_probs).exp()
         weighted_probs = advantage * prob_ratio
         weighted_clipped_probs = T.clamp(prob_ratio, 1-self.policy_clip, 1+self.policy_clip)*advantage
         actor_loss = -T.min(weighted_probs, weighted_clipped_probs).mean()
 
+        # dont really know what is going on but just know that we need this
         returns = advantage+values
         critic_loss = ((returns-critic_value)**2).mean()
 
-        total_loss = actor_loss + 0.5*critic_loss
+        total_loss = actor_loss + 0.5*critic_loss - self.entropy_coefficient*entropy
         self.actor.optimizer.zero_grad()
         self.critic.optimizer.zero_grad()
         total_loss.backward()

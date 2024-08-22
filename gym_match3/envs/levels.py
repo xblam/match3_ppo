@@ -137,6 +137,25 @@ for x in range(0, 9):
             for _y in range(y, y + 2):
                 easy_board[_x][_y] = GameObject.monster_dame
 
+        # easy_levels.append(
+        #     Level(10, 9, 5, copy.deepcopy(easy_board), [
+        #         DameMonster(
+        #             position=Point(x, y),
+        #             width=2,
+        #             height=2,
+        #             hp=40,
+        #         )])
+        # )
+        # easy_levels.append(
+        #     Level(10, 9, 5, copy.deepcopy(easy_board), [
+        #         DameMonster(
+        #             position=Point(x, y),
+        #             width=2,
+        #             height=2,
+        #             hp=random.randint(20, 25),
+        #             request_masked=[1, 1, 1, 1, 0]
+        #         )])
+        # )
         easy_levels.append(
             Level(10, 9, 5, copy.deepcopy(easy_board), [
                 DameMonster(
@@ -144,26 +163,7 @@ for x in range(0, 9):
                     width=2,
                     height=2,
                     hp=40,
-                )])
-        )
-        easy_levels.append(
-            Level(10, 9, 5, copy.deepcopy(easy_board), [
-                DameMonster(
-                    position=Point(x, y),
-                    width=2,
-                    height=2,
-                    hp=random.randint(20, 25),
-                    request_masked=[1, 1, 1, 1, 0]
-                )])
-        )
-        easy_levels.append(
-            Level(10, 9, 5, copy.deepcopy(easy_board), [
-                DameMonster(
-                    position=Point(x, y),
-                    width=2,
-                    height=2,
-                    hp=40,
-                    request_masked=[0, 0, 0, 0, 1]
+                    request_masked=[0, 0, 0, 0, 1] # this one means that it only takes damage from pu
                 )])
         )
 
@@ -495,6 +495,6 @@ medium_levels = [Level(10, 9, 5, [
     
 LEVELS = [   
     *easy_levels,
-    *medium_levels
+    # *medium_levels
 ]
 
