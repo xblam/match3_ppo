@@ -102,6 +102,7 @@ class Agent:
         self.n_epochs = n_epochs
         self.gae_lambda = .95
         self.win_list = []
+        self.entropy_coefficient = 0.001
 
         self.actor = ActorNetwork().to(DEVICE)
         self.critic = CriticNetwork().to(DEVICE)
@@ -152,37 +153,41 @@ class Agent:
 
         return action, probs, value
 
-    def learn(self, end_game_reward): # we can definitely split this stuff into multiple batches and then train on the batches by themselves using multiprocessing
-        state_arr, action_arr, old_prob_arr, vals_arr, reward_arr, dones_arr = self.memory.get_memory()
+    def compute_gae(self, end_game_reward):
+        self.memory.rewards[-1] += end_game_reward # we will add this to the last move
 
-        reward_arr[-1] += end_game_reward # we will add this to the last move
+        advantage = np.zeros(len(self.memory.rewards), dtype=np.float32)
 
-        advantage = np.zeros(len(reward_arr), dtype=np.float32)
-
-        for t in range(len(reward_arr)-1):
+        for t in range(len(self.memory.rewards)-1):
             discount = 1
             a_t = 0
-            for k in range(t, len(reward_arr)-1):
-                a_t += discount*(reward_arr[k] + self.gamma*vals_arr[k+1]*\
-                        (1-int(dones_arr[k])) - vals_arr[k])
+            for k in range(t, len(self.memory.rewards)-1):
+                a_t += discount*(self.memory.rewards[k] + self.gamma*self.memory.vals[k+1]*\
+                        (1-int(self.memory.dones[k])) - self.memory.vals[k])
                 discount *= self.gamma*self.gae_lambda
             advantage[t] = a_t
+        return advantage
+
+    def learn(self, end_game_reward): # we can definitely split this stuff into multiple batches and then train on the batches by themselves using multiprocessing
+        # first we compute the advantage using the GAE function
+        advantage = self.compute_gae(end_game_reward)
         advantage = T.tensor(advantage).to(DEVICE)
 
-        # use all the lists from the games to update the model
-        values = T.tensor(vals_arr).to(DEVICE)
-        states = [tensor.to(DEVICE) for tensor in state_arr]
+        # turn memory lists into tensors
+        values = T.tensor(self.memory.vals).to(DEVICE)
+        states = [tensor.to(DEVICE) for tensor in self.memory.states]
         states = T.stack(states)
-        old_probs = T.tensor(old_prob_arr).to(DEVICE)
-        actions = T.tensor(action_arr).to(DEVICE)
+        old_probs = T.tensor(self.memory.probs).to(DEVICE)
+        actions = T.tensor(self.memory.actions).to(DEVICE)
 
+        # get the new distribution for all of those states
         dist = self.actor(states)
-        critic_value = self.critic(states)
+        entropy = dist.entropy().mean()
+        critic_value = self.critic(states) 
+        critic_value = T.squeeze(critic_value) # identical to vals but includes autograd, makes backprop easier
 
-        critic_value = T.squeeze(critic_value)
-
+        # calculate the probs ratios and use that to calculate actor loss
         new_probs = dist.log_prob(actions)
-        # prob_ratio = new_probs.exp() / old_probs.exp()
         prob_ratio = (new_probs - old_probs).exp()
         weighted_probs = advantage * prob_ratio
         weighted_clipped_probs = T.clamp(prob_ratio, 1-self.policy_clip, 1+self.policy_clip)*advantage
@@ -191,7 +196,7 @@ class Agent:
         returns = advantage+values
         critic_loss = ((returns-critic_value)**2).mean()
 
-        total_loss = actor_loss + 0.5*critic_loss
+        total_loss = actor_loss + 0.5*critic_loss - self.entropy_coefficient*entropy
         self.actor.optimizer.zero_grad()
         self.critic.optimizer.zero_grad()
         total_loss.backward()
@@ -199,4 +204,3 @@ class Agent:
         self.critic.optimizer.step()
         self.memory.clear_memory()
         return actor_loss, critic_loss
- 

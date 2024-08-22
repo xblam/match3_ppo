@@ -17,11 +17,8 @@ def run(num_episodes=1000, log=True, load=False, model_id=22):
     if load: 
         agent.load_model(model_id)
         print("LOADING PREVIOUS MODEL")
+    run_name =  f'{agent.run_id}-{model_id}' if load else agent.run_id
 
-    # make the name of the run properlyc        
-    run_name = f'{agent.run_id}-{model_id}' if load else  agent.run_id
-
-        
     if log: wandb.init(project="match3_easy_ppo", name=str(run_name))
 
     for current_episode in range(num_episodes): 

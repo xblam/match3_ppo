@@ -163,7 +163,7 @@ for x in range(0, 9):
                     width=2,
                     height=2,
                     hp=40,
-                    request_masked=[0, 0, 0, 0, 1]
+                    request_masked=[0, 0, 0, 0, 1] # this one means that it only takes damage from pu
                 )])
         )
 
