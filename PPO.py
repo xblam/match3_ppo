@@ -48,11 +48,15 @@ class ActorNetwork(nn.Module):
             nn.ReLU()
         )
         self.actor_fc = nn.Sequential(
-            nn.Linear(128*10*9, 512),
+            nn.Linear(128*10*9, 1024),
             nn.ReLU(),
-            nn.Linear(512, 512),
+            nn.Linear(1024, 1024),
             nn.ReLU(),
-            nn.Linear(512, 161),
+            nn.Linear(1024, 1024),
+            nn.ReLU(),
+            nn.Linear(1024, 1024),
+            nn.ReLU(),
+            nn.Linear(1024, 161),
             nn.Softmax(dim=-1)
         )
 
@@ -76,11 +80,15 @@ class CriticNetwork(nn.Module):
             nn.ReLU()
         )
         self.critic_fc = nn.Sequential(
-            nn.Linear(128*10*9, 512),
+            nn.Linear(128*10*9, 1024),
             nn.ReLU(),
-            nn.Linear(512, 512),
+            nn.Linear(1024, 1024),
             nn.ReLU(),
-            nn.Linear(512, 1)
+            nn.Linear(1024, 1024),
+            nn.ReLU(), 
+            nn.Linear(1024, 1024),
+            nn.ReLU(),
+            nn.Linear(1024, 1)
         )
 
         self.optimizer = optim.Adam(self.parameters(), lr=0.001)
