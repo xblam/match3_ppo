@@ -1,6 +1,7 @@
 from gym_match3.envs.match3_env import Match3Env
 from PPO import *
 import time
+import argparse
 
 def display_model(num_episodes=10, model_id=int):
     env = Match3Env()
@@ -40,7 +41,11 @@ def display_model(num_episodes=10, model_id=int):
         
 
 def main():
-    display_model(100, 35)
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-m', '--model', type=int)
+    args = parser.parse_args()
+
+    display_model(100, args.model)
    
 
 if __name__ == '__main__':
