@@ -147,18 +147,8 @@ class Match3Env(gym.Env):
             else:
                 reward.update(
                     {
-                        "game": (
-                            -30
-                            - 1
-                            * sum(
-                                [
-                                    mon.get_hp()
-                                    for mon in self.__game.list_monsters
-                                    if mon.real_monster
-                                ]
-                            )
-                            if not is_early_done_game
-                            else 30 + 10 * self.__game.num_mons
+                        "game": (-30 - sum([mon.get_hp() for mon in self.__game.list_monsters if mon.real_monster]) if not is_early_done_game
+                            else 30 + 10 * self.__game.num_mons + 10 * self.get_player_hp()
                         )
                     }
                 )
