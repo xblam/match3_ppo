@@ -140,19 +140,17 @@ class Match3Env(gym.Env):
             or self.__game.get_player_hp() <= 0
         ):
             episode_over = True
-            self.__episode_counter = 0
 
             if self.__game.get_player_hp() <= 0:
-                reward.update({"game": -100})
+                reward.update({"game": (-50 - self.get_mon_hp())}) # update reward to factor in how much damage we did to monster
             else:
                 reward.update(
-                    {
-                        "game": (-30 - sum([mon.get_hp() for mon in self.__game.list_monsters if mon.real_monster]) if not is_early_done_game
-                            else 30 + 10 * self.__game.num_mons + 10 * self.get_player_hp()
-                        )
+                    {"game": (-30 - self.get_mon_hp()) if not is_early_done_game
+                            else (30 + 10 * self.__game.num_mons + 10 * self.get_player_hp() + self.rollout_len - self.__episode_counter) # factoring in how many moves it took for us to win as well
                     }
                 )
 
+            self.__episode_counter = 0
             # print(reward) #openlater
             self.result_step += 1
             obs, infos = self.reset()
