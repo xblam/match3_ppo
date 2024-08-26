@@ -62,7 +62,7 @@ def run(num_episodes=1000, log=True, load=False, model_id=22):
         else: 
             current_level = 0
             game_won.append(0)
-        win_rate = sum(game_won[-100:])/(min(current_episode+1, 100))
+        win_rate = sum(game_won[-500:])/(min(current_episode+1, 500))
         agent.win_list = game_won
 
         
