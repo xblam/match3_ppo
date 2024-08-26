@@ -4,6 +4,7 @@ import torch as T
 import torch.nn as nn
 import torch.optim as optim
 from torch.distributions.categorical import Categorical
+import time
 
 DEVICE = T.device("cuda" if T.cuda.is_available() else "cpu")
 if (T.cuda.is_available()):
@@ -48,7 +49,7 @@ class ActorNetwork(nn.Module):
             nn.ReLU()
         )
         self.actor_fc = nn.Sequential(
-            nn.Linear(128*10*9, 1024),
+            nn.Linear((26+128)*10*9, 1024),
             nn.ReLU(),
             nn.Linear(1024, 1024),
             nn.ReLU(),
@@ -64,7 +65,8 @@ class ActorNetwork(nn.Module):
 
     def forward(self, state):
         dist = self.actor_cnn(state)
-        dist = dist.view(dist.size(0),-1)
+        dist = T.cat((state, dist), dim = 1) # this will combined them into 156x10x9
+        dist = dist.view(dist.size(0),-1) # flatten all dimensions except for the batch dimension (dist.size(0) is the batch, -1 means autodim the rest)
         dist = self.actor_fc(dist)
         dist = Categorical(dist)
         return dist    
@@ -80,7 +82,7 @@ class CriticNetwork(nn.Module):
             nn.ReLU()
         )
         self.critic_fc = nn.Sequential(
-            nn.Linear(128*10*9, 1024),
+            nn.Linear((26+128)*10*9, 1024),
             nn.ReLU(),
             nn.Linear(1024, 1024),
             nn.ReLU(),
@@ -95,6 +97,7 @@ class CriticNetwork(nn.Module):
 
     def forward(self, state):
         value = self.critic_cnn(state)
+        value = T.cat((state, value), dim = 1)
         value = value.view(value.size(0), -1)
         value = self.critic_fc(value)
         return value
