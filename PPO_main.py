@@ -6,7 +6,7 @@ from PPO import *
 import cProfile, pstats
 import argparse
 
-def run(num_episodes=1000, log=True, load=False, model_id=22):
+def run(num_episodes=1000, log=True, load=False, model_id=22, message=''):
     moves_dict = dict()
     env = Match3Env()
     agent = Agent()
@@ -18,6 +18,7 @@ def run(num_episodes=1000, log=True, load=False, model_id=22):
         agent.load_model(model_id)
         print("LOADING PREVIOUS MODEL")
     run_name =  f'heavy {agent.run_id}-{model_id}' if load else f'heavy {agent.run_id}'
+    run_name += message
 
     if log: wandb.init(project="match3_easy_ppo", name=str(run_name))
 
@@ -60,6 +61,7 @@ def run(num_episodes=1000, log=True, load=False, model_id=22):
             game_won.append(1)
             agent.save_model()
         else: 
+            print('GAME LOST, RESETTING LEVELS WON')                                    
             current_level = 0
             game_won.append(0)
         win_rate = sum(game_won[-500:])/(min(current_episode+1, 500))
@@ -77,12 +79,13 @@ def main():
     parser.add_argument('-e', '--episodes', type=int)
     parser.add_argument('-log', '--log', action='store_true')
     parser.add_argument('-m', '--model', type=int)
+    parser.add_argument('-msg', '--message', type=str)
     args = parser.parse_args()
 
     load_model = False
     if args.model: load_model = True
     
-    run(args.episodes, args.log, load_model, args.model)
+    run(args.episodes, args.log, load_model, args.model, args.message)
    
 
 if __name__ == '__main__':
