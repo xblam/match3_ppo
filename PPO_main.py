@@ -43,7 +43,7 @@ def run(num_episodes=1000, log=True, load=False, model_id=22, message=''):
 
             # increment the steps, and add to total damage. Save all these values to memory
             n_steps += 1
-            damage = reward['power_damage_on_monster'] + reward['match_damage_on_monster'] 
+            damage = reward['power_damage_on_monster'] + reward['match_damage_on_monster'] + reward['create_pu_score']/5
             episode_damage += damage
             agent.remember(obs, action, prob, val, damage, done)
 
@@ -52,7 +52,7 @@ def run(num_episodes=1000, log=True, load=False, model_id=22, message=''):
             print('run id', agent.run_id, '\nepisode', current_episode, '\nscore', episode_damage, '\ntime_steps', n_steps, '\nlearning_steps', learn_iters, '\nreward', reward, '\nplayer hp', player_hp, '\nmonster_hp', mon_hp)
 
         # when the game is over, we will train the model, need to give it the end game reward so it can factor it in when updating model
-        actor_loss, critic_loss = agent.learn(reward['game'])
+        actor_loss, critic_loss = agent.learn((reward['game']/10))
         learn_iters += 1
         # check the game reward to see what level we are on and update the win rate. we will also not save the state of the model unless it wins a game
         if reward['game'] > 0: 
