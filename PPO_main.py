@@ -68,7 +68,8 @@ def run(num_episodes=1000, log=True, load=False, model_id=22):
         
         # log all of the information with wandb
         if log: wandb.log({"episode_damage":episode_damage, "episode":current_episode, 'game reward':reward['game'], 'total reward':reward['game']+
-                           episode_damage, 'monster remaining hp' : mon_hp, 'player remaining hp':player_hp, 'actor loss': actor_loss, 'critic loss':critic_loss, 'current level':current_level, 'win rate':win_rate})
+            episode_damage, 'monster remaining hp' : mon_hp, 'player remaining hp':player_hp, 'actor loss': actor_loss, 
+            'critic loss':critic_loss, 'current level':current_level, 'win rate':win_rate})
 
 def main():
 
