@@ -59,12 +59,14 @@ def run(num_episodes=1000, log=True, load=False, model_id=22, message=''):
             current_level = 0
             game_won.append(0)
         win_rate = sum(game_won[-500:])/(min(current_episode+1, 500))
+        
+        # technically this is fine, if you have time make it less resource intensive though
         agent.win_list = game_won
         agent.moves_dict = moves_dict
 
-        if current_episode%10==0:
+        if current_episode%100==0:
             # when the game is over, we will train the model, need to give it the end game reward so it can factor it in when updating model
-            actor_loss, critic_loss = agent.learn(100)
+            actor_loss, critic_loss = agent.learn(1000)
             learn_iters += 1
         
             # log all of the information with wandb

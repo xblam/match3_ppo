@@ -130,7 +130,7 @@ class Agent:
         self.gae_lambda = .95
         self.win_list = []
         self.moves_dict = {}
-        self.entropy_coefficient = 0.001
+        self.entropy_coefficient = 0.1
 
         self.actor = ActorNetwork().to(DEVICE)
         self.critic = CriticNetwork().to(DEVICE)
@@ -165,7 +165,7 @@ class Agent:
     def load_heatmap(self, model_num):
         file_path = os.path.join(self.counter_folder, f"{model_num}_state_dict.pth")
         state_dict = T.load(file_path)
-        self.win_list = state_dict['win_list']
+        self.moves_dict = state_dict['moves_dict']
 
     def remember(self, state, action, probs, values, reward, done):
         self.memory.store_memory(state, action, probs, values, reward, done)

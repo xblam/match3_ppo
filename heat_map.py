@@ -9,8 +9,12 @@ import argparse
 def make_heatmap(model_id):
     agent = Agent()
     agent.load_heatmap(model_id)
-    print(agent.win_list)
+    print(agent.moves_dict) # the keys are the moves, and the values are how many times the move has been played
 
 
 if __name__ == '__main__':
-    make_heatmap(124)
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-m', '--model', type=str)
+    args = parser.parse_args()
+
+    make_heatmap(args.model)
