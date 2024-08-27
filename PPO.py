@@ -77,7 +77,7 @@ class ActorNetwork(nn.Module):
             nn.Softmax(dim=-1)
         )
 
-        self.optimizer = optim.Adam(self.parameters(), lr=0.001)
+        self.optimizer = optim.Adam(self.parameters(), lr=0.0001)
 
     def forward(self, state):
         dist = self.actor_cnn(state)
@@ -109,7 +109,7 @@ class CriticNetwork(nn.Module):
             nn.Linear(1024, 1)
         )
 
-        self.optimizer = optim.Adam(self.parameters(), lr=0.001)
+        self.optimizer = optim.Adam(self.parameters(), lr=0.0001)
 
     def forward(self, state):
         value = self.critic_cnn(state)
