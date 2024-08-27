@@ -1,4 +1,3 @@
-from torch.distributions.categorical import Categorical
 from gym_match3.envs.match3_env import Match3Env
 import wandb
 import cProfile, pstats
@@ -39,23 +38,19 @@ def run(num_episodes=1000, log=True, load=False, model_id=22, message=''):
             action, prob, val = agent.choose_action(obs, infos)
             new_obs, reward, done, infos = env.step(action) 
 
-            moves_dict[action] = moves_dict.get(action, 0) + 1
+            moves_dict[int(action)] = moves_dict.get(int(action), 0) + 1
 
-            # increment the steps, and add to total damage. Save all these values to memory
             n_steps += 1
             damage = reward['power_damage_on_monster'] + reward['match_damage_on_monster'] + reward['create_pu_score']/5
             episode_damage += damage
             agent.remember(obs, action, prob, val, damage, done)
 
-            # update the observations and print out the figures and stats for troubleshooting
             obs = new_obs
             print('run id', agent.run_id, '\nepisode', current_episode, '\nscore', episode_damage, '\ntime_steps', n_steps, '\nlearning_steps', learn_iters, '\nreward', reward, '\nplayer hp', player_hp, '\nmonster_hp', mon_hp)
         # add the end scaled end of game reward to the last index of rewards
         agent.memory.rewards[-1] += reward['game']/5
 
-        # check the game reward to see what level we are on and update the win rate. we will also not save the state of the model unless it wins a game
         if reward['game'] > 0: 
-            print('MONSTER KILLED, MOVING ON TO NEXT LEVEL')
             current_level += 1
             game_won.append(1)
             agent.save_model()
@@ -65,6 +60,7 @@ def run(num_episodes=1000, log=True, load=False, model_id=22, message=''):
             game_won.append(0)
         win_rate = sum(game_won[-500:])/(min(current_episode+1, 500))
         agent.win_list = game_won
+        agent.moves_dict = moves_dict
 
         if current_episode%10==0:
             # when the game is over, we will train the model, need to give it the end game reward so it can factor it in when updating model
@@ -75,6 +71,7 @@ def run(num_episodes=1000, log=True, load=False, model_id=22, message=''):
             if log: wandb.log({"episode_damage":episode_damage, "episode":current_episode, 'game reward':reward['game'], 'total reward':reward['game']+
                 episode_damage, 'monster remaining hp' : mon_hp, 'player remaining hp':player_hp, 'actor loss': actor_loss, 
                 'critic loss':critic_loss, 'current level':current_level, 'win rate':win_rate})
+        
 
 def main():
 
