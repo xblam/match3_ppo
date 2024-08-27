@@ -129,6 +129,7 @@ class Agent:
         self.n_epochs = n_epochs
         self.gae_lambda = .95
         self.win_list = []
+        self.moves_dict = {}
         self.entropy_coefficient = 0.001
 
         self.actor = ActorNetwork().to(DEVICE)
@@ -148,7 +149,7 @@ class Agent:
 
     def save_model(self):
         checkpoint = {'actor_state': self.actor.state_dict(), 'critic_state': self.critic.state_dict(), 'actor_optimizer': self.actor.optimizer.state_dict(), 
-                      'critic_optimizer': self.critic.optimizer.state_dict(), 'win_list':self.win_list}
+                      'critic_optimizer': self.critic.optimizer.state_dict(), 'win_list':self.win_list, 'moves_dict':self.moves_dict}
         os.makedirs(self.counter_folder, exist_ok=True)
         file_path = os.path.join(self.counter_folder, f"{self.run_id}_state_dict.pth")
         T.save(checkpoint, file_path)
@@ -160,6 +161,11 @@ class Agent:
         self.critic.load_state_dict(state_dict['critic_state'])
         self.actor.optimizer.load_state_dict(state_dict['actor_optimizer'])
         self.critic.optimizer.load_state_dict(state_dict['critic_optimizer'])
+
+    def load_heatmap(self, model_num):
+        file_path = os.path.join(self.counter_folder, f"{model_num}_state_dict.pth")
+        state_dict = T.load(file_path)
+        self.win_list = state_dict['win_list']
 
     def remember(self, state, action, probs, values, reward, done):
         self.memory.store_memory(state, action, probs, values, reward, done)
