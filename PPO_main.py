@@ -50,10 +50,9 @@ def run(num_episodes=1000, log=True, load=False, model_id=22, message=''):
             # update the observations and print out the figures and stats for troubleshooting
             obs = new_obs
             print('run id', agent.run_id, '\nepisode', current_episode, '\nscore', episode_damage, '\ntime_steps', n_steps, '\nlearning_steps', learn_iters, '\nreward', reward, '\nplayer hp', player_hp, '\nmonster_hp', mon_hp)
+        # add the end scaled end of game reward to the last index of rewards
+        agent.memory.rewards[-1] += reward['game']/5
 
-        # when the game is over, we will train the model, need to give it the end game reward so it can factor it in when updating model
-        actor_loss, critic_loss = agent.learn((reward['game']/10))
-        learn_iters += 1
         # check the game reward to see what level we are on and update the win rate. we will also not save the state of the model unless it wins a game
         if reward['game'] > 0: 
             print('MONSTER KILLED, MOVING ON TO NEXT LEVEL')
@@ -67,11 +66,15 @@ def run(num_episodes=1000, log=True, load=False, model_id=22, message=''):
         win_rate = sum(game_won[-500:])/(min(current_episode+1, 500))
         agent.win_list = game_won
 
+        if current_episode%10==0:
+            # when the game is over, we will train the model, need to give it the end game reward so it can factor it in when updating model
+            actor_loss, critic_loss = agent.learn(100)
+            learn_iters += 1
         
-        # log all of the information with wandb
-        if log: wandb.log({"episode_damage":episode_damage, "episode":current_episode, 'game reward':reward['game'], 'total reward':reward['game']+
-            episode_damage, 'monster remaining hp' : mon_hp, 'player remaining hp':player_hp, 'actor loss': actor_loss, 
-            'critic loss':critic_loss, 'current level':current_level, 'win rate':win_rate})
+            # log all of the information with wandb
+            if log: wandb.log({"episode_damage":episode_damage, "episode":current_episode, 'game reward':reward['game'], 'total reward':reward['game']+
+                episode_damage, 'monster remaining hp' : mon_hp, 'player remaining hp':player_hp, 'actor loss': actor_loss, 
+                'critic loss':critic_loss, 'current level':current_level, 'win rate':win_rate})
 
 def main():
 

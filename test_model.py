@@ -35,7 +35,7 @@ def display_model(num_episodes=10, model_id=int):
             current_level = 0
             print('ROUND HAS BEEN LOST')
             game_won.append(0)
-        print('win rate', sum(game_won[-100:])/min(100,current_episode+1))
+        print('win rate', sum(game_won[-500:])/min(500,current_episode+1))
         time.sleep(3)
 
         

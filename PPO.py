@@ -14,16 +14,32 @@ class PPOMemory:
     def __init__(self):
         self.states = []
         self.probs = []
-        self.vals = []
+        self.values = []
         self.actions = []
         self.rewards = []
         self.dones = []
+        self.batch_size = 100
 
-    def store_memory(self, state, action, probs, vals, reward, done):
+    def generate_batches(self):
+        n_states = len(self.states)
+        batch_start = np.arange(0, n_states, self.batch_size)
+        indices = np.arange(n_states, dtype=np.int64)
+        np.random.shuffle(indices)
+        batches = [indices[i:i+self.batch_size] for i in batch_start]
+
+        return np.array(self.states),\
+                np.array(self.actions),\
+                np.array(self.probs),\
+                np.array(self.values),\
+                np.array(self.rewards),\
+                np.array(self.dones),\
+                batches
+
+    def store_memory(self, state, action, probs, values, reward, done):
         self.states.append(state)
         self.actions.append(action)
         self.probs.append(probs)
-        self.vals.append(vals)
+        self.values.append(values)
         self.rewards.append(reward)
         self.dones.append(done)
 
@@ -31,12 +47,12 @@ class PPOMemory:
         self.states = []
         self.actions = []
         self.probs = []
-        self.vals = []
+        self.values = []
         self.rewards = []
         self.dones = []
     
     def get_memory(self):
-        return self.states, self.actions, self.probs, self.vals, self.rewards, self.dones 
+        return self.states, self.actions, self.probs, self.values, self.rewards, self.dones 
 
 class ActorNetwork(nn.Module):
     # the asterisk just means that we are unpacking whatever dimensions the input dims is
@@ -145,8 +161,8 @@ class Agent:
         self.actor.optimizer.load_state_dict(state_dict['actor_optimizer'])
         self.critic.optimizer.load_state_dict(state_dict['critic_optimizer'])
 
-    def remember(self, state, action, probs, vals, reward, done):
-        self.memory.store_memory(state, action, probs, vals, reward, done)
+    def remember(self, state, action, probs, values, reward, done):
+        self.memory.store_memory(state, action, probs, values, reward, done)
         
     def choose_action(self, observation, infos):
         observation = observation.unsqueeze(0).to(DEVICE)
@@ -164,54 +180,54 @@ class Agent:
 
         return action, probs, value
 
-    def compute_gae(self, end_game_reward):
-        self.memory.rewards[-1] += end_game_reward # we will add this to the last move
+    def learn(self, batch_size): # we can definitely split this stuff into multiple batches and then train on the batches by themselves using multiprocessing
+        self.memory.batch_size = batch_size
+        for _ in range(self.n_epochs):
+            state_arr, action_arr, old_prob_arr, vals_arr,\
+            reward_arr, dones_arr, batches = \
+                    self.memory.generate_batches()
 
-        advantage = np.zeros(len(self.memory.rewards), dtype=np.float32)
+            values = vals_arr
+            advantage = np.zeros(len(reward_arr), dtype=np.float32)
 
-        for t in range(len(self.memory.rewards)-1):
-            discount = 1
-            a_t = 0
-            for k in range(t, len(self.memory.rewards)-1):
-                a_t += discount*(self.memory.rewards[k] + self.gamma*self.memory.vals[k+1]*\
-                        (1-int(self.memory.dones[k])) - self.memory.vals[k])
-                discount *= self.gamma*self.gae_lambda
-            advantage[t] = a_t
-        return advantage
+            for t in range(len(reward_arr)-1):
+                discount = 1
+                a_t = 0
+                for k in range(t, len(reward_arr)-1):
+                    a_t += discount*(reward_arr[k] + self.gamma*values[k+1]*\
+                            (1-int(dones_arr[k])) - values[k])
+                    discount *= self.gamma*self.gae_lambda
+                advantage[t] = a_t
+            advantage = T.tensor(advantage).to(DEVICE)
 
-    def learn(self, end_game_reward): # we can definitely split this stuff into multiple batches and then train on the batches by themselves using multiprocessing
-        # first we compute the advantage using the GAE function
-        advantage = self.compute_gae(end_game_reward)
-        advantage = T.tensor(advantage).to(DEVICE)
+            values = T.tensor(values).to(DEVICE)
+            for batch in batches:
+                states = T.tensor(state_arr[batch], dtype=T.float).to(DEVICE)
+                old_probs = T.tensor(old_prob_arr[batch]).to(DEVICE)
+                actions = T.tensor(action_arr[batch]).to(DEVICE)
 
-        # turn memory lists into tensors
-        values = T.tensor(self.memory.vals).to(DEVICE)
-        states = [tensor.to(DEVICE) for tensor in self.memory.states]
-        states = T.stack(states)
-        old_probs = T.tensor(self.memory.probs).to(DEVICE)
-        actions = T.tensor(self.memory.actions).to(DEVICE)
+                dist = self.actor(states)
+                critic_value = self.critic(states)
 
-        # get the new distribution for all of those states
-        dist = self.actor(states)
-        entropy = dist.entropy().mean()
-        critic_value = self.critic(states) 
-        critic_value = T.squeeze(critic_value) # identical to vals but includes autograd, makes backprop easier
+                critic_value = T.squeeze(critic_value)
 
-        # calculate the probs ratios and use that to calculate actor loss
-        new_probs = dist.log_prob(actions)
-        prob_ratio = (new_probs - old_probs).exp()
-        weighted_probs = advantage * prob_ratio
-        weighted_clipped_probs = T.clamp(prob_ratio, 1-self.policy_clip, 1+self.policy_clip)*advantage
-        actor_loss = -T.min(weighted_probs, weighted_clipped_probs).mean()
+                new_probs = dist.log_prob(actions)
+                prob_ratio = new_probs.exp() / old_probs.exp()
+                #prob_ratio = (new_probs - old_probs).exp()
+                weighted_probs = advantage[batch] * prob_ratio
+                weighted_clipped_probs = T.clamp(prob_ratio, 1-self.policy_clip,
+                        1+self.policy_clip)*advantage[batch]
+                actor_loss = -T.min(weighted_probs, weighted_clipped_probs).mean()
 
-        returns = advantage+values
-        critic_loss = ((returns-critic_value)**2).mean()
-
-        total_loss = actor_loss + 0.5*critic_loss - self.entropy_coefficient*entropy
-        self.actor.optimizer.zero_grad()
-        self.critic.optimizer.zero_grad()
-        total_loss.backward()
-        self.actor.optimizer.step()
-        self.critic.optimizer.step()
+                returns = advantage[batch] + values[batch]
+                critic_loss = (returns-critic_value)**2
+                critic_loss = critic_loss.mean()
+                entropy = dist.entropy().mean()
+                total_loss = actor_loss + 0.5*critic_loss - self.entropy_coefficient*entropy
+                self.actor.optimizer.zero_grad()
+                self.critic.optimizer.zero_grad()
+                total_loss.backward()
+                self.actor.optimizer.step()
+                self.critic.optimizer.step()
         self.memory.clear_memory()
         return actor_loss, critic_loss
