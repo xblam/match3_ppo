@@ -130,7 +130,7 @@ class Agent:
         self.gae_lambda = .95
         self.win_list = []
         self.moves_dict = {}
-        self.entropy_coefficient = 0.1
+        self.entropy_coefficient = 0.01
 
         self.actor = ActorNetwork().to(DEVICE)
         self.critic = CriticNetwork().to(DEVICE)

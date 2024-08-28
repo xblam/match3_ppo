@@ -17,7 +17,7 @@ def run(num_episodes=1000, log=True, load=False, model_id=22, message=''):
         agent.load_model(model_id)
         print("LOADING PREVIOUS MODEL")
     run_name =  f'{agent.run_id}-{model_id}' if load else f'{agent.run_id}'
-    run_name += message
+    run_name += " " + message
 
     if log: wandb.init(project="match3_easy_ppo", name=str(run_name))
 
@@ -64,9 +64,10 @@ def run(num_episodes=1000, log=True, load=False, model_id=22, message=''):
         agent.win_list = game_won
         agent.moves_dict = moves_dict
 
-        if current_episode%100==0:
+        if current_episode%10==0:
             # when the game is over, we will train the model, need to give it the end game reward so it can factor it in when updating model
-            actor_loss, critic_loss = agent.learn(1000)
+            agent.entropy_coefficient = 0.01
+            actor_loss, critic_loss = agent.learn(100)
             learn_iters += 1
         
             # log all of the information with wandb
